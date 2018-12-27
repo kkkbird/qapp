@@ -47,14 +47,14 @@ func indexHandler(name string) http.HandlerFunc {
 	}
 }
 
-func runHttpServerSimple(ctx context.Context) error {
+func runHTTPServerSimple(ctx context.Context) error {
 	name := ctx.Value(cHTTPName).(string)
 	port := ctx.Value(cHTTPPort).(string)
 
 	srv := http.NewServeMux()
 	srv.HandleFunc("/", indexHandler(name))
 
-	log.WithField("name", name).WithField("port", port).Debugf("Run runHttpServerSimple()")
+	log.WithField("name", name).WithField("port", port).Debugf("Run runHTTPServerSimple()")
 
 	server := &http.Server{
 		Addr:    port,
@@ -63,13 +63,13 @@ func runHttpServerSimple(ctx context.Context) error {
 	return server.ListenAndServe()
 }
 
-func runHttpServerDummy(port string) bshark.DaemonFunc {
+func runHTTPServerDummy(port string) bshark.DaemonFunc {
 
 	return func(ctx context.Context) error {
 		srv := http.NewServeMux()
 		srv.HandleFunc("/", indexHandler(port))
 
-		log.WithField("name", port).WithField("port", port).Debugf("Run runHttpServerDummy()")
+		log.WithField("name", port).WithField("port", port).Debugf("Run runHTTPServerDummy()")
 
 		server := &http.Server{
 			Addr:    port,
@@ -84,7 +84,7 @@ func main() {
 		AddInitStage("initDB", initDBSimple).
 		AddInitStage("initDBs", initDBDummy(2), initDBDummy(3), initDBDummy(4)).
 		AddInitStage("initHTTPServer", initHTTPServer).
-		AddDaemons(runHttpServerSimple, runHttpServerDummy(":18080")).
-		AddDaemons(runHttpServerDummy(":18081"), runHttpServerDummy(":18082")).
+		AddDaemons(runHTTPServerSimple, runHTTPServerDummy(":18080")).
+		AddDaemons(runHTTPServerDummy(":18081"), runHTTPServerDummy(":18082")).
 		Run()
 }
