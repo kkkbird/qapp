@@ -80,7 +80,7 @@ func runHTTPServerDummy(port string) bshark.DaemonFunc {
 }
 
 func main() {
-	bshark.New("mytestapp", nil).SetLogger(log.WithField("bshark", "mytestapp")).
+	bshark.New(nil, "mytestapp").SetLogger(log.WithField("bshark", "mytestapp")).
 		AddInitStage("initDB", initDBSimple).
 		AddInitStage("initDBs", initDBDummy(2), initDBDummy(3), initDBDummy(4)).
 		AddInitStage("initHTTPServer", initHTTPServer).

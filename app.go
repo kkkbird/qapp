@@ -8,9 +8,13 @@ import (
 	"sync"
 )
 
+// InitFunc for bshark app init modules
 type InitFunc func(ctx context.Context) (context.Context, error)
+
+// DaemonFunc for bshark app daemon modules
 type DaemonFunc func(ctx context.Context) error
 
+//InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
 type InitStage struct {
 	name  string
 	funcs []InitFunc
@@ -32,6 +36,7 @@ func newInitStage(name string, funcs []InitFunc) *InitStage {
 	}
 }
 
+// Application is a bshark app
 type Application struct {
 	logger     Logger
 	name       string
@@ -40,7 +45,8 @@ type Application struct {
 	daemons    []DaemonFunc
 }
 
-func New(name string, ctx context.Context) *Application {
+// New create a bshark app object
+func New(ctx context.Context, name string) *Application {
 	if ctx == nil {
 		ctx = context.TODO()
 	}
@@ -61,21 +67,25 @@ func (a *Application) printf(format string, args ...interface{}) {
 	a.logger.Printf(format, args...)
 }
 
+// SetLogger set bshark app logger object
 func (a *Application) SetLogger(logger Logger) *Application {
 	a.logger = logger
 	return a
 }
 
+// AddInitStage add a stage for bshark app
 func (a *Application) AddInitStage(name string, funcs ...InitFunc) *Application {
 	a.initStages = append(a.initStages, newInitStage(name, funcs))
 	return a
 }
 
+// AddInitStage add a daemon for bshark app
 func (a *Application) AddDaemons(funcs ...DaemonFunc) *Application {
 	a.daemons = append(a.daemons, funcs...)
 	return a
 }
 
+// Run run bshark app, it should be called at last
 func (a *Application) Run() {
 	var err error
 	a.printf("App %s start", a.name)
@@ -94,7 +104,7 @@ func (a *Application) Run() {
 				funcName := getFuncName(_fc)
 
 				// TODO: add recover for call init func
-				if a.ctx, err = _fc(a.ctx); err != nil {
+				if a.ctx, err = _fc(a.ctx); err != nil { // TODO: set ctx not thread safe !!!
 					panic(fmt.Sprintf("%s() fail: %s", funcName, err))
 				}
 
