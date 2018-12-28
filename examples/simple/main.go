@@ -4,26 +4,46 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/kkkbird/bshark"
 	log "github.com/kkkbird/qlog"
 )
 
-func initDBSimple(ctx context.Context) (context.Context, error) {
+func initDBSimple(ctx context.Context) error {
 	log.Debugf("Call initDBSimple()")
-	return ctx, nil
+	return nil
 }
 
-func initDBSimpleFail(ctx context.Context) (context.Context, error) {
+func initDBSimpleFail(ctx context.Context) error {
 	err := fmt.Errorf("Call initDBSimpleFail()")
 	log.Error(err)
-	return ctx, err
+	return err
+}
+
+func initDBSimpleTimeout(ctx context.Context) error {
+	log.Debug("Call initDBSimpleTimeout() start")
+	time.Sleep(5 * time.Second)
+	log.Debug("Call initDBSimpleTimeout() end")
+	return nil
+}
+
+func initDBSimpleTimeoutWithContext(ctx context.Context) error {
+	log.Debug("Call initDBSimpleTimeoutWithContext() start")
+	select {
+	case <-time.After(5 * time.Second):
+		log.Debug("Call initDBSimpleTimeoutWithContext() done")
+	case <-ctx.Done():
+		log.Debug("Finish initDBSimpleTimeoutWithContext() by context")
+	}
+	log.Debug("Call initDBSimpleTimeout() end")
+	return nil
 }
 
 func initDBDummy(dummyID int) bshark.InitFunc {
-	return func(ctx context.Context) (context.Context, error) {
+	return func(ctx context.Context) error {
 		log.Debugf("Call initDBDummy():%d", dummyID)
-		return ctx, nil
+		return nil
 	}
 }
 
@@ -34,11 +54,11 @@ const (
 	cHTTPPort
 )
 
-func initHTTPServer(ctx context.Context) (context.Context, error) {
+func initHTTPServer(ctx context.Context) error {
 	ctx = context.WithValue(ctx, cHTTPName, "simplehttp")
 	ctx = context.WithValue(ctx, cHTTPPort, ":8080")
 
-	return ctx, nil
+	return nil
 }
 
 func indexHandler(name string) http.HandlerFunc {
@@ -47,9 +67,11 @@ func indexHandler(name string) http.HandlerFunc {
 	}
 }
 
-func runHTTPServerSimple(ctx context.Context) error {
-	name := ctx.Value(cHTTPName).(string)
-	port := ctx.Value(cHTTPPort).(string)
+func runHTTPServerSimple() error {
+	// name := ctx.Value(cHTTPName).(string)
+	// port := ctx.Value(cHTTPPort).(string)
+	name := "simpleServer"
+	port := ":8080"
 
 	srv := http.NewServeMux()
 	srv.HandleFunc("/", indexHandler(name))
@@ -64,8 +86,7 @@ func runHTTPServerSimple(ctx context.Context) error {
 }
 
 func runHTTPServerDummy(port string) bshark.DaemonFunc {
-
-	return func(ctx context.Context) error {
+	return func() error {
 		srv := http.NewServeMux()
 		srv.HandleFunc("/", indexHandler(port))
 
@@ -80,9 +101,10 @@ func runHTTPServerDummy(port string) bshark.DaemonFunc {
 }
 
 func main() {
-	bshark.New(nil, "mytestapp").SetLogger(log.WithField("bshark", "mytestapp")).
+	bshark.New("mytestapp", bshark.WithInitTimeout(3*time.Second)).SetLogger(log.WithField("bshark", "mytestapp")).
 		AddInitStage("initDB", initDBSimple).
 		AddInitStage("initDBs", initDBDummy(2), initDBDummy(3), initDBDummy(4)).
+		//AddInitStage("initDbs2", initDBSimpleTimeout, initDBSimpleTimeoutWithContext, initDBSimpleFail).
 		AddInitStage("initHTTPServer", initHTTPServer).
 		AddDaemons(runHTTPServerSimple, runHTTPServerDummy(":18080")).
 		AddDaemons(runHTTPServerDummy(":18081"), runHTTPServerDummy(":18082")).
