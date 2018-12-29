@@ -107,7 +107,7 @@ func runHTTPServerDummy(port string) bshark.DaemonFunc {
 }
 
 func main() {
-	bshark.New("mytestapp", bshark.WithInitTimeout(3*time.Second)).SetLogger(log.WithField("bshark", "mytestapp")).
+	bshark.New("mytestapp", bshark.WithInitTimeout(3*time.Second), bshark.WithLogger(log.WithField("bshark", "mytestapp"))).
 		AddInitStage("initDB", initDBSimple).
 		AddInitStage("initDBs", initDBDummy(2), initDBDummy(3), initDBDummy(4)).
 		//AddInitStage("initDbs2", initDBSimpleTimeout, initDBSimpleTimeoutWithContext, initDBSimpleFail).

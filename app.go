@@ -114,6 +114,13 @@ func WithDaemonForceCloseTimeout(timeout time.Duration) AppOpts {
 	}
 }
 
+// WithLogger set logger of application
+func WithLogger(logger Logger) AppOpts {
+	return func(a *Application) {
+		a.logger = logger
+	}
+}
+
 // New create a bshark app object
 func New(name string, opts ...AppOpts) *Application {
 	app := &Application{
@@ -139,12 +146,6 @@ func (a *Application) printf(format string, args ...interface{}) {
 	}
 
 	a.logger.Printf(format, args...)
-}
-
-// SetLogger set bshark app logger object
-func (a *Application) SetLogger(logger Logger) *Application {
-	a.logger = logger
-	return a
 }
 
 // AddInitStage add a stage for bshark app
@@ -258,7 +259,7 @@ func (a *Application) runDaemons() error {
 __daemon_loop:
 	for {
 		var closeTimer <-chan time.Time
-		if isCanceled {			
+		if isCanceled {
 			closeTimer = time.After(a.daemonForceCloseTimeout)
 		} else {
 			closeTimer = nil
