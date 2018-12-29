@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -67,7 +68,7 @@ func indexHandler(name string) http.HandlerFunc {
 	}
 }
 
-func runHTTPServerSimple() error {
+func runHTTPServerSimple(ctx context.Context) error {
 	// name := ctx.Value(cHTTPName).(string)
 	// port := ctx.Value(cHTTPPort).(string)
 	name := "simpleServer"
@@ -85,8 +86,12 @@ func runHTTPServerSimple() error {
 	return server.ListenAndServe()
 }
 
+func runDaemonFail(ctx context.Context) error {
+	return errors.New("error runHTTPServerSimple2")
+}
+
 func runHTTPServerDummy(port string) bshark.DaemonFunc {
-	return func() error {
+	return func(ctx context.Context) error {
 		srv := http.NewServeMux()
 		srv.HandleFunc("/", indexHandler(port))
 
@@ -96,6 +101,7 @@ func runHTTPServerDummy(port string) bshark.DaemonFunc {
 			Addr:    port,
 			Handler: srv,
 		}
+
 		return server.ListenAndServe()
 	}
 }
@@ -108,5 +114,6 @@ func main() {
 		AddInitStage("initHTTPServer", initHTTPServer).
 		AddDaemons(runHTTPServerSimple, runHTTPServerDummy(":18080")).
 		AddDaemons(runHTTPServerDummy(":18081"), runHTTPServerDummy(":18082")).
+		//AddDaemons(runHTTPServerDummy(":18081"), runDaemonFail).
 		Run()
 }
