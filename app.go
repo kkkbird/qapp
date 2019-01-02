@@ -7,7 +7,11 @@ import (
 	"runtime"
 	"sync"
 	"time"
+
+	"github.com/kkkbird/qlog"
 )
+
+var log = qlog.WithField("bshark", "application")
 
 func getFuncName(f interface{}) string {
 	fv := reflect.ValueOf(f)
@@ -23,6 +27,9 @@ type DaemonFunc func(ctx context.Context) error
 
 // InitFunc for bshark app init modules
 type InitFunc func(ctx context.Context) error
+
+// ClearFunc for bshark app
+type ClearFunc func(ctx context.Context) // TODO: add clear funcs
 
 //InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
 type InitStage struct {
@@ -48,13 +55,13 @@ func (s *InitStage) Run(ctx context.Context, a *Application) error {
 				}
 			}()
 
-			a.printf("  %s() start...", funcName)
+			log.Infof("  %s() start...", funcName)
 
 			if err := _fc(ctx); err != nil {
 				a.initErrChan <- fmt.Errorf("%s():%s", funcName, err)
 				return
 			}
-			a.printf("  %s() done!", funcName)
+			log.Infof("  %s() done!", funcName)
 		}(fc)
 	}
 
@@ -73,15 +80,14 @@ func newInitStage(name string, funcs []InitFunc) *InitStage {
 // Application is a bshark app
 type Application struct {
 	initTimeout             time.Duration
+	initErrChan             chan error
 	initForceCloseTimeout   time.Duration // default 1
 	daemonForceCloseTimeout time.Duration // default 3
 
-	logger     Logger
+	//logger     Logger
 	name       string
 	initStages []*InitStage
 	daemons    []DaemonFunc
-
-	initErrChan chan error
 }
 
 // AppOpts is setters for application options
@@ -115,11 +121,11 @@ func WithDaemonForceCloseTimeout(timeout time.Duration) AppOpts {
 }
 
 // WithLogger set logger of application
-func WithLogger(logger Logger) AppOpts {
-	return func(a *Application) {
-		a.logger = logger
-	}
-}
+// func WithLogger(logger Logger) AppOpts {
+// 	return func(a *Application) {
+// 		a.logger = logger
+// 	}
+// }
 
 // New create a bshark app object
 func New(name string, opts ...AppOpts) *Application {
@@ -140,13 +146,14 @@ func New(name string, opts ...AppOpts) *Application {
 	return app
 }
 
-func (a *Application) printf(format string, args ...interface{}) {
-	if a.logger == nil {
-		return
-	}
+// func (a *Application) printf(format string, args ...interface{}) {
+// 	if a.logger == nil {
+// 		log.Infof(format, args...)
+// 		return
+// 	}
 
-	a.logger.Printf(format, args...)
-}
+// 	a.logger.Printf(format, args...)
+// }
 
 // AddInitStage add a stage for bshark app
 func (a *Application) AddInitStage(name string, funcs ...InitFunc) *Application {
@@ -179,7 +186,7 @@ func (a *Application) runInitStages() error {
 		cErr := make(chan error, 1)
 
 		go func() {
-			a.printf("Init stage %d-%s", i+1, s.name)
+			log.Infof("Init stage %d-%s", i+1, s.name)
 			cErr <- s.Run(ctx, a)
 		}()
 
@@ -189,7 +196,7 @@ func (a *Application) runInitStages() error {
 				return err
 			}
 		case err = <-a.initErrChan:
-			a.printf("!!Init err:%s, exit in %s ...", err, a.initForceCloseTimeout.String())
+			log.Infof("!!Init err:%s, exit in %s ...", err, a.initForceCloseTimeout.String())
 			cancel()
 			select { // wait the init stage done or initForceCloseTimeout duration
 			case <-cErr:
@@ -197,7 +204,7 @@ func (a *Application) runInitStages() error {
 			}
 			return err
 		case <-ctx.Done():
-			a.printf("!!Init timeount, exit in %s ...", a.initForceCloseTimeout.String())
+			log.Infof("!!Init timeount, exit in %s ...", a.initForceCloseTimeout.String())
 			select { // wait the init stage done or initForceCloseTimeout duration
 			case <-cErr:
 			case <-time.After(a.initForceCloseTimeout):
@@ -239,12 +246,12 @@ func (a *Application) runDaemons() error {
 					}
 				}()
 
-				a.printf("  %s() ... running", funcName)
+				log.Infof("  %s() ... running", funcName)
 				if err := _d(ctx); err != nil {
 					cErr <- fmt.Errorf("%s():%s", funcName, err)
 					return
 				}
-				a.printf("  %s() ... done", funcName)
+				log.Infof("  %s() ... done", funcName)
 			}(d)
 		}
 
@@ -267,11 +274,11 @@ __daemon_loop:
 
 		select {
 		case err = <-cErr:
-			a.printf("!!Daemon err:%s, exit in %s ...", err, a.daemonForceCloseTimeout.String())
+			log.Infof("!!Daemon err:%s, exit in %s ...", err, a.daemonForceCloseTimeout.String())
 			cancel()
 			isCanceled = true
 		case <-closeTimer:
-			a.printf("!!Daemon exit after %s", a.daemonForceCloseTimeout.String())
+			log.Infof("!!Daemon exit after %s", a.daemonForceCloseTimeout.String())
 			break __daemon_loop
 		case <-cDone:
 			break __daemon_loop
@@ -283,16 +290,16 @@ __daemon_loop:
 // Run run bshark app, it should be called at last
 func (a *Application) Run() {
 	var err error
-	a.printf("App %s start", a.name)
+	log.Infof("App %s start", a.name)
 
 	if err = a.runInitStages(); err != nil {
 		panic(err)
 	}
 
-	a.printf("All init stage done, start daemons")
+	log.Infof("All init stage done, start daemons")
 
 	if err = a.runDaemons(); err != nil {
 		panic(err)
 	}
-	a.printf("App %s done", a.name)
+	log.Infof("App %s done", a.name)
 }
