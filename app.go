@@ -55,13 +55,13 @@ func (s *InitStage) Run(ctx context.Context, a *Application) error {
 				}
 			}()
 
-			log.Infof("  %s() start...", funcName)
+			log.Debugf("  %s() start...", funcName)
 
 			if err := _fc(ctx); err != nil {
 				a.initErrChan <- fmt.Errorf("%s():%s", funcName, err)
 				return
 			}
-			log.Infof("  %s() done!", funcName)
+			log.Debugf("  %s() done!", funcName)
 		}(fc)
 	}
 
@@ -246,12 +246,12 @@ func (a *Application) runDaemons() error {
 					}
 				}()
 
-				log.Infof("  %s() ... running", funcName)
+				log.Debugf("  %s() ... running", funcName)
 				if err := _d(ctx); err != nil {
 					cErr <- fmt.Errorf("%s():%s", funcName, err)
 					return
 				}
-				log.Infof("  %s() ... done", funcName)
+				log.Debugf("  %s() ... done", funcName)
 			}(d)
 		}
 
@@ -290,13 +290,13 @@ __daemon_loop:
 // Run run bshark app, it should be called at last
 func (a *Application) Run() {
 	var err error
-	log.Infof("App %s start", a.name)
+	log.Infof("Application %s starting...", a.name)
 
 	if err = a.runInitStages(); err != nil {
 		panic(err)
 	}
 
-	log.Infof("All init stage done, start daemons")
+	log.Infof("All init stage done, starting daemons...")
 
 	if err = a.runDaemons(); err != nil {
 		panic(err)
