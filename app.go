@@ -8,6 +8,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/spf13/pflag"
+
+	"github.com/kkkbird/bshark/debugserver"
 	"github.com/kkkbird/qlog"
 )
 
@@ -81,13 +84,15 @@ func newInitStage(name string, funcs []InitFunc) *InitStage {
 type Application struct {
 	initTimeout             time.Duration
 	initErrChan             chan error
-	initForceCloseTimeout   time.Duration // default 1
-	daemonForceCloseTimeout time.Duration // default 3
+	initForceCloseTimeout   time.Duration // default 1s
+	daemonForceCloseTimeout time.Duration // default 3s
 
-	//logger     Logger
-	name       string
-	initStages []*InitStage
-	daemons    []DaemonFunc
+	registerAppFlags    func()
+	onConfigFileChanged func()
+	cmdline             *pflag.FlagSet
+	name                string
+	initStages          []*InitStage
+	daemons             []DaemonFunc
 }
 
 // AppOpts is setters for application options
@@ -133,6 +138,7 @@ func New(name string, opts ...AppOpts) *Application {
 		initTimeout:             0, // no timeout
 		initForceCloseTimeout:   time.Second,
 		daemonForceCloseTimeout: 3 * time.Second,
+		cmdline:                 pflag.CommandLine,
 		name:                    name,
 		initStages:              make([]*InitStage, 0),
 		daemons:                 make([]DaemonFunc, 0),
@@ -143,7 +149,15 @@ func New(name string, opts ...AppOpts) *Application {
 	for _, opt := range opts {
 		opt(app)
 	}
+
+	app.AddInitStage("BSHARK", app.initParams).AddDaemons(debugserver.Run)
+
 	return app
+}
+
+func (a *Application) initParams(ctx context.Context) error {
+	a.handleFlagsAndEnv()
+	return nil
 }
 
 // func (a *Application) printf(format string, args ...interface{}) {
@@ -186,7 +200,7 @@ func (a *Application) runInitStages() error {
 		cErr := make(chan error, 1)
 
 		go func() {
-			log.Infof("Init stage %d-%s", i+1, s.name)
+			log.Infof("Init stage %d-%s", i, s.name)
 			cErr <- s.Run(ctx, a)
 		}()
 
