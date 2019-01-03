@@ -1,0 +1,7 @@
+logger:
+  level: INFO
+  reportcaller: false
+  formatter: 
+    name: text
+    opts:
+      forcecolors: true
