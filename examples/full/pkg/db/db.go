@@ -7,7 +7,7 @@ import (
 )
 
 // InitDB is an example
-func InitDB(ctx context.Context, name string) error {
+func Init(ctx context.Context, name string) error {
 
 	log.Debugf("call initdb by %s", name)
 

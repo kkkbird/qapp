@@ -16,26 +16,30 @@ const (
 	addr    = ":8080"
 )
 
-func regFlags() {
+func preInit() {
 	pflag.String("token", "app1", "appname")
 	pflag.String("addr", ":8080", "listen address")
 
 	viper.RegisterAlias(debugserver.FlagDebugToken, "token")
-	viper.Set("file", "app.yml")
+	//viper.Set("file", "app.yml")
 }
 
 func initDB(ctx context.Context) error {
-	db.InitDB(ctx, appName)
+	db.Init(ctx, appName)
 
 	return nil
 }
 
 func runHTTPServer(ctx context.Context) error {
-	return httpsrv.RunHTTPServer(ctx, viper.GetString("token"), viper.GetString("addr"))
+	return httpsrv.Run(ctx, viper.GetString("token"), viper.GetString("addr"))
+}
+
+func onConfigChange() {
+	httpsrv.Restart(viper.GetString("token"), viper.GetString("addr"))
 }
 
 func main() {
-	bshark.New(appName, bshark.WithPreInit(regFlags)).
+	bshark.New(appName, bshark.WithPreInit(preInit), bshark.WithConfigChanged(onConfigChange)).
 		AddInitStage("initDB", initDB).
 		AddDaemons(runHTTPServer).
 		Run()

@@ -1,1 +1,5 @@
 token: abc123
+addr: ":8092"
+
+debugserver:
+  enabled: true
