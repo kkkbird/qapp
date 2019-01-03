@@ -36,7 +36,7 @@ func init() {
 	debugServeMux.Handle("/debug/vars", expvar.Handler())
 }
 
-var indexHtml string = `
+var indexHtml = `
 <html>
 	<h1>Debug server: {{.Token}}</h1>
 	<ul>
@@ -60,7 +60,7 @@ func AddParam(name string, getter func() interface{}) {
 }
 
 func RegisteDebugServerPFlags() error {
-	pflag.Bool(FlagDebugEnabled, true, "enable debug server")
+	pflag.Bool(FlagDebugEnabled, false, "enable debug server")
 	pflag.String(FlagDebugAddr, ":15050", "listen address")
 	pflag.String(FlagDebugToken, "app", "listen address")
 

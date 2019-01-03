@@ -87,7 +87,7 @@ type Application struct {
 	initForceCloseTimeout   time.Duration // default 1s
 	daemonForceCloseTimeout time.Duration // default 3s
 
-	registerAppFlags    func()
+	preInit             func()
 	onConfigFileChanged func()
 	cmdline             *pflag.FlagSet
 	name                string
@@ -150,7 +150,7 @@ func New(name string, opts ...AppOpts) *Application {
 		opt(app)
 	}
 
-	app.AddInitStage("BSHARK", app.initParams).AddDaemons(debugserver.Run)
+	app.AddInitStage("preInit", app.initParams).AddDaemons(debugserver.Run)
 
 	return app
 }

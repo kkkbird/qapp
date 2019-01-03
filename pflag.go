@@ -14,8 +14,8 @@ func (a *Application) handleFlagsAndEnv() {
 	debugserver.RegisteDebugServerPFlags()
 	pflag.StringP("file", "f", "app.yml", "config file name")
 
-	if a.registerAppFlags != nil {
-		a.registerAppFlags()
+	if a.preInit != nil {
+		a.preInit()
 	}
 
 	a.cmdline.Parse(qlog.FilterFlags(os.Args[1:]))
@@ -59,8 +59,8 @@ func WithConfigChanged(onConfigChange func()) AppOpts {
 }
 
 // WithAppFlagRegister set app self flags
-func WithAppFlagRegister(appFlagRegister func()) AppOpts {
+func WithPreInit(preInit func()) AppOpts {
 	return func(a *Application) {
-		a.registerAppFlags = appFlagRegister
+		a.preInit = preInit
 	}
 }
