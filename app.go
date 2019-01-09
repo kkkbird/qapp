@@ -58,13 +58,13 @@ func (s *InitStage) Run(ctx context.Context, a *Application) error {
 				}
 			}()
 
-			log.Debugf("  %s() start...", funcName)
+			log.Tracef("  %s() start...", funcName)
 
 			if err := _fc(ctx); err != nil {
 				a.initErrChan <- fmt.Errorf("%s():%s", funcName, err)
 				return
 			}
-			log.Debugf("  %s() done!", funcName)
+			log.Tracef("  %s() done!", funcName)
 		}(fc)
 	}
 
@@ -260,12 +260,12 @@ func (a *Application) runDaemons() error {
 					}
 				}()
 
-				log.Debugf("  %s() ... running", funcName)
+				log.Tracef("  %s() ... running", funcName)
 				if err := _d(ctx); err != nil {
 					cErr <- fmt.Errorf("%s():%s", funcName, err)
 					return
 				}
-				log.Debugf("  %s() ... done", funcName)
+				log.Tracef("  %s() ... done", funcName)
 			}(d)
 		}
 
