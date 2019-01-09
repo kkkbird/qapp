@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 
+	"github.com/kkkbird/bshark/debugserver"
+
+	"github.com/gin-gonic/gin"
 	"github.com/kkkbird/bshark"
 	"github.com/kkkbird/bshark/examples/full/pkg/db"
-	"github.com/kkkbird/bshark/examples/full/pkg/httpsrv"
 )
 
 const (
@@ -20,7 +22,10 @@ func initDB(ctx context.Context) (bshark.CleanFunc, error) {
 }
 
 func runHTTPServer(ctx context.Context) error {
-	return httpsrv.Run(ctx, appName, addr)
+	r := gin.Default()
+	debugserver.RegisterGin(r, "/dev")
+
+	return r.Run()
 }
 
 func main() {

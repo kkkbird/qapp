@@ -5,7 +5,6 @@ import (
 	"expvar"
 	"html/template"
 	"net/http"
-	"net/http/pprof"
 
 	"github.com/spf13/viper"
 
@@ -15,43 +14,34 @@ import (
 )
 
 var (
-	debugServeMux *http.ServeMux
+	debugServeMux = http.NewServeMux()
 	log           = qlog.WithField("bshark", "debugserver")
 )
 
 const (
 	FlagDebugEnabled = "debugserver.enabled"
 	FlagDebugAddr    = "debugserver.addr"
-	FlagDebugToken   = "debugserver.token"
 )
 
 func init() {
-	debugServeMux = http.NewServeMux()
-	debugServeMux.HandleFunc("/", debugIndex)
-	debugServeMux.HandleFunc("/debug/pprof/", pprof.Index)
-	debugServeMux.HandleFunc("/debug/pprof/cmdline", pprof.Cmdline)
-	debugServeMux.HandleFunc("/debug/pprof/profile", pprof.Profile)
-	debugServeMux.HandleFunc("/debug/pprof/symbol", pprof.Symbol)
-	debugServeMux.HandleFunc("/debug/pprof/trace", pprof.Trace)
-	debugServeMux.Handle("/debug/vars", expvar.Handler())
+	RegisterHttpMux(debugServeMux)
 }
 
 var indexHtml = `
 <html>
-	<h1>Debug server: {{.Token}}</h1>
+	<h1>Debug server</h1>
 	<ul>
-		<li><a href="/debug/pprof/">pprof</a></li>
-		<li><a href="/debug/vars">var</a></li>
+		<li><a href="{{.Prefix}}/pprof">pprof</a></li>
+		<li><a href="{{.Prefix}}/vars">vars</a></li>
 	</ul>
 </html>
 `
 
 func debugIndex(w http.ResponseWriter, r *http.Request) {
 	t := template.Must(template.New("index").Parse(indexHtml))
-	t.Execute(w, struct {
-		Token string
-	}{
-		Token: viper.GetString(FlagDebugToken),
+
+	t.Execute(w, map[string]interface{}{
+		"Prefix": r.URL.Path,
 	})
 }
 
@@ -62,14 +52,12 @@ func AddParam(name string, getter func() interface{}) {
 func RegisteDebugServerPFlags() error {
 	pflag.Bool(FlagDebugEnabled, false, "enable debug server")
 	pflag.String(FlagDebugAddr, ":15050", "listen address")
-	pflag.String(FlagDebugToken, "app", "listen address")
 
 	return nil
 }
 
 func Run(ctx context.Context) error {
 	enabled := viper.GetBool(FlagDebugEnabled)
-	token := viper.GetString(FlagDebugToken)
 	addr := viper.GetString(FlagDebugAddr)
 
 	if !enabled {
@@ -77,8 +65,6 @@ func Run(ctx context.Context) error {
 		return nil
 	}
 
-	AddParam("token", func() interface{} { return token })
-
-	log.Infof("Debug server for %s start at %s", token, addr)
+	log.Infof("Debug server start at %s", addr)
 	return http.ListenAndServe(addr, debugServeMux)
 }

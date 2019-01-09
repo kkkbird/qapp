@@ -134,7 +134,7 @@ type Application struct {
 	initTimeout             time.Duration
 	initErrChan             chan error
 	cleanTimeout            time.Duration // default 1s
-	daemonForceCloseTimeout time.Duration // default 3s
+	daemonForceCloseTimeout time.Duration // default 1s
 
 	preInit             func()
 	onConfigFileChanged func()
@@ -186,7 +186,7 @@ func New(name string, opts ...AppOpts) *Application {
 	app := &Application{
 		initTimeout:             0, // no timeout
 		cleanTimeout:            time.Second,
-		daemonForceCloseTimeout: 3 * time.Second,
+		daemonForceCloseTimeout: time.Second,
 		cmdline:                 pflag.CommandLine,
 		name:                    name,
 		initStages:              make([]*InitStage, 0),
