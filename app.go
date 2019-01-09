@@ -3,9 +3,12 @@ package bshark
 import (
 	"context"
 	"fmt"
+	"os"
+	"os/signal"
 	"reflect"
 	"runtime"
 	"sync"
+	"syscall"
 	"time"
 
 	"github.com/spf13/pflag"
@@ -355,6 +358,9 @@ func (a *Application) runDaemons() error {
 		close(cDone)
 	}()
 
+	cSignal := make(chan os.Signal, 1)
+	signal.Notify(cSignal, syscall.SIGINT, syscall.SIGTERM)
+
 	var err error
 	var isCanceled = false
 
@@ -372,12 +378,20 @@ __daemon_loop:
 			log.WithError(err).Errorf("!!Daemon err, exit in %s ...", a.daemonForceCloseTimeout.String())
 			cancel()
 			isCanceled = true
-			cErr = nil // set cErr to nil to ignore other daemon fail
+			cErr = nil    // set cErr to nil to ignore other daemon fail
+			cSignal = nil // set cSignal to nil to ignore multi signal
 		case <-closeTimer:
 			log.Infof("!!Daemon exit after %s", a.daemonForceCloseTimeout.String())
 			break __daemon_loop
 		case <-cDone:
+			log.Trace("  all daemons done")
 			break __daemon_loop
+		case s := <-cSignal:
+			log.Infof("!!Received signal:%s, exit in %s ...", s, a.daemonForceCloseTimeout.String())
+			cancel()
+			isCanceled = true
+			cErr = nil    // set cErr to nil to ignore other daemon fail
+			cSignal = nil // set cSignal to nil to ignore multi signal
 		}
 	}
 	return err
@@ -386,18 +400,18 @@ __daemon_loop:
 // Run run bshark app, it should be called at last
 func (a *Application) Run() {
 	var err error
-	log.Infof("Application %s starting...", a.name)
+	log.Infof("Application [%s] starting...", a.name)
+
+	defer a.runCleanStage()
 
 	if err = a.runInitStages(); err != nil {
-		a.runCleanStage()
 		log.WithError(err).Panic("Application fail to init!")
 	}
 
 	log.Infof("All init stage done, starting daemons...")
 
 	if err = a.runDaemons(); err != nil {
-		a.runCleanStage()
 		log.WithError(err).Panic("Application fail to run daemon!")
 	}
-	log.Infof("App %s done", a.name)
+	log.Infof("Application [%s] done", a.name)
 }
