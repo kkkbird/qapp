@@ -11,25 +11,25 @@ import (
 	log "github.com/kkkbird/qlog"
 )
 
-func initDBSimple(ctx context.Context) error {
+func initDBSimple(ctx context.Context) (bshark.CleanFunc, error) {
 	log.Debugf("Call initDBSimple()")
-	return nil
+	return nil, nil
 }
 
-func initDBSimpleFail(ctx context.Context) error {
+func initDBSimpleFail(ctx context.Context) (bshark.CleanFunc, error) {
 	err := fmt.Errorf("Call initDBSimpleFail()")
 	log.Error(err)
-	return err
+	return nil, err
 }
 
-func initDBSimpleTimeout(ctx context.Context) error {
+func initDBSimpleTimeout(ctx context.Context) (bshark.CleanFunc, error) {
 	log.Debug("Call initDBSimpleTimeout() start")
 	time.Sleep(5 * time.Second)
 	log.Debug("Call initDBSimpleTimeout() end")
-	return nil
+	return nil, nil
 }
 
-func initDBSimpleTimeoutWithContext(ctx context.Context) error {
+func initDBSimpleTimeoutWithContext(ctx context.Context) (bshark.CleanFunc, error) {
 	log.Debug("Call initDBSimpleTimeoutWithContext() start")
 	select {
 	case <-time.After(5 * time.Second):
@@ -38,13 +38,13 @@ func initDBSimpleTimeoutWithContext(ctx context.Context) error {
 		log.Debug("Finish initDBSimpleTimeoutWithContext() by context")
 	}
 	log.Debug("Call initDBSimpleTimeout() end")
-	return nil
+	return nil, nil
 }
 
 func initDBDummy(dummyID int) bshark.InitFunc {
-	return func(ctx context.Context) error {
+	return func(ctx context.Context) (bshark.CleanFunc, error) {
 		log.Debugf("Call initDBDummy():%d", dummyID)
-		return nil
+		return nil, nil
 	}
 }
 
@@ -55,11 +55,11 @@ const (
 	cHTTPPort
 )
 
-func initHTTPServer(ctx context.Context) error {
+func initHTTPServer(ctx context.Context) (bshark.CleanFunc, error) {
 	ctx = context.WithValue(ctx, cHTTPName, "simplehttp")
 	ctx = context.WithValue(ctx, cHTTPPort, ":8080")
 
-	return nil
+	return nil, nil
 }
 
 func indexHandler(name string) http.HandlerFunc {
@@ -114,6 +114,6 @@ func main() {
 		AddInitStage("initHTTPServer", initHTTPServer).
 		AddDaemons(runHTTPServerSimple, runHTTPServerDummy(":18080")).
 		AddDaemons(runHTTPServerDummy(":18081"), runHTTPServerDummy(":18082")).
-		//AddDaemons(runHTTPServerDummy(":18081"), runDaemonFail).
+		//AddDaemons(runDaemonFail).
 		Run()
 }

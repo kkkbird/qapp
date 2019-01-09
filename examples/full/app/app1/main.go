@@ -24,10 +24,10 @@ func preInit() {
 	//viper.Set("file", "app.yml")
 }
 
-func initDB(ctx context.Context) error {
+func initDB(ctx context.Context) (bshark.CleanFunc, error) {
 	db.Init(ctx, appName)
 
-	return nil
+	return nil, nil
 }
 
 func runHTTPServer(ctx context.Context) error {

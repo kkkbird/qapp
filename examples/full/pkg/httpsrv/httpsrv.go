@@ -50,8 +50,8 @@ func startServer(name string, addr string) error {
 	// Global middleware
 	// Logger middleware will write the logs to gin.DefaultWriter even if you set with GIN_MODE=release.
 	// By default gin.DefaultWriter = os.Stdout
-	//r.Use(qGinLogger)
-	r.Use(gin.Logger())
+	r.Use(qGinLogger)
+	//r.Use(gin.Logger())
 
 	// Recovery middleware recovers from any panics and writes a 500 if there was one.
 	r.Use(gin.Recovery())
@@ -65,6 +65,7 @@ func startServer(name string, addr string) error {
 		Addr:    addr,
 		Handler: r,
 	}
+	log.Debugf("Server %s start at %s", name, addr)
 	// service connections
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		return err

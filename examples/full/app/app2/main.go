@@ -13,14 +13,14 @@ const (
 	addr    = ":8082"
 )
 
-func initDB(ctx context.Context) error {
-	db.InitDB(ctx, appName)
+func initDB(ctx context.Context) (bshark.CleanFunc, error) {
+	db.Init(ctx, appName)
 
-	return nil
+	return nil, nil
 }
 
 func runHTTPServer(ctx context.Context) error {
-	return httpsrv.RunHTTPServer(ctx, appName, addr)
+	return httpsrv.Run(ctx, appName, addr)
 }
 
 func main() {

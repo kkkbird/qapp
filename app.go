@@ -29,15 +29,16 @@ func getFuncName(f interface{}) string {
 type DaemonFunc func(ctx context.Context) error
 
 // InitFunc for bshark app init modules
-type InitFunc func(ctx context.Context) error
+type InitFunc func(ctx context.Context) (CleanFunc, error)
 
-// ClearFunc for bshark app
-type ClearFunc func(ctx context.Context) // TODO: add clear funcs
+// ClearFunc for bshark app, clean init module
+type CleanFunc func(ctx context.Context)
 
 //InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
 type InitStage struct {
-	name  string
-	funcs []InitFunc
+	name       string
+	funcs      []InitFunc
+	cleanFuncs []CleanFunc
 }
 
 // Run run a InitStage
@@ -60,10 +61,55 @@ func (s *InitStage) Run(ctx context.Context, a *Application) error {
 
 			log.Tracef("  %s() start...", funcName)
 
-			if err := _fc(ctx); err != nil {
+			cleanFunc, err := _fc(ctx)
+			if err != nil {
 				a.initErrChan <- fmt.Errorf("%s():%s", funcName, err)
 				return
 			}
+			// no need to add clean func if err != nil
+			if cleanFunc != nil {
+				if s.cleanFuncs == nil {
+					s.cleanFuncs = make([]CleanFunc, 0)
+				}
+				s.cleanFuncs = append(s.cleanFuncs, cleanFunc)
+			}
+
+			log.Tracef("  %s() done!", funcName)
+		}(fc)
+	}
+
+	wg.Wait()
+
+	return nil
+}
+
+// Clean the InitStage
+func (s *InitStage) Clean(ctx context.Context, a *Application) error {
+	var wg sync.WaitGroup
+
+	if len(s.cleanFuncs) == 0 {
+		log.Trace("  nothing to clean")
+		return nil
+	}
+
+	wg.Add(len(s.cleanFuncs))
+
+	for _, fc := range s.cleanFuncs {
+		go func(_fc CleanFunc) {
+			defer wg.Done()
+
+			funcName := getFuncName(_fc)
+
+			defer func() {
+				if r := recover(); r != nil {
+					log.Errorf("clean %s() panic:%s", funcName, r)
+				}
+			}()
+
+			log.Tracef("  %s() cleaning...", funcName)
+
+			_fc(ctx)
+
 			log.Tracef("  %s() done!", funcName)
 		}(fc)
 	}
@@ -84,7 +130,7 @@ func newInitStage(name string, funcs []InitFunc) *InitStage {
 type Application struct {
 	initTimeout             time.Duration
 	initErrChan             chan error
-	initForceCloseTimeout   time.Duration // default 1s
+	cleanTimeout            time.Duration // default 1s
 	daemonForceCloseTimeout time.Duration // default 3s
 
 	preInit             func()
@@ -111,10 +157,10 @@ func WithInitTimeout(timeout time.Duration) AppOpts {
 	}
 }
 
-// WithInitForceCloseTimeout set init force close timeout
-func WithInitForceCloseTimeout(timeout time.Duration) AppOpts {
+// WithCleanTimeout set init force close timeout
+func WithCleanTimeout(timeout time.Duration) AppOpts {
 	return func(a *Application) {
-		a.initForceCloseTimeout = timeout
+		a.cleanTimeout = timeout
 	}
 }
 
@@ -136,7 +182,7 @@ func WithDaemonForceCloseTimeout(timeout time.Duration) AppOpts {
 func New(name string, opts ...AppOpts) *Application {
 	app := &Application{
 		initTimeout:             0, // no timeout
-		initForceCloseTimeout:   time.Second,
+		cleanTimeout:            time.Second,
 		daemonForceCloseTimeout: 3 * time.Second,
 		cmdline:                 pflag.CommandLine,
 		name:                    name,
@@ -155,9 +201,9 @@ func New(name string, opts ...AppOpts) *Application {
 	return app
 }
 
-func (a *Application) initParams(ctx context.Context) error {
+func (a *Application) initParams(ctx context.Context) (CleanFunc, error) {
 	a.handleFlagsAndEnv()
-	return nil
+	return nil, nil
 }
 
 // func (a *Application) printf(format string, args ...interface{}) {
@@ -207,22 +253,25 @@ func (a *Application) runInitStages() error {
 		select {
 		case err = <-cErr:
 			if err != nil {
+				panic("shoud not run to this line")
 				return err
 			}
 		case err = <-a.initErrChan:
-			log.WithError(err).Errorf("!!Init err, exit in %s ...", a.initForceCloseTimeout.String())
 			cancel()
-			select { // wait the init stage done or initForceCloseTimeout duration
+			log.WithError(err).Errorf("!!Init err, exit in 1s")
+			select { // wait the init stage done or cleanTimeout duration
 			case <-cErr:
-			case <-time.After(a.initForceCloseTimeout):
+			case <-time.After(time.Second):
 			}
+
 			return err
 		case <-ctx.Done():
-			log.Errorf("!!Init timeount, exit in %s ...", a.initForceCloseTimeout.String())
-			select { // wait the init stage done or initForceCloseTimeout duration
+			log.Errorf("!!Init timeount, exit in 1s")
+			select { // wait the init stage done or cleanTimeout duration
 			case <-cErr:
-			case <-time.After(a.initForceCloseTimeout):
+			case <-time.After(time.Second):
 			}
+
 			return ctx.Err()
 		}
 	}
@@ -230,12 +279,44 @@ func (a *Application) runInitStages() error {
 	return nil
 }
 
+func (a *Application) runCleanStage() {
+	var (
+		ctx    = context.Background()
+		cancel context.CancelFunc
+	)
+
+	if a.cleanTimeout > 0 {
+		ctx, cancel = context.WithTimeout(ctx, a.cleanTimeout)
+	} else {
+		ctx, cancel = context.WithCancel(ctx)
+	}
+	defer cancel()
+
+	// run clean stage in reverse order
+	for i := len(a.initStages) - 1; i >= 0; i-- {
+		s := a.initStages[i]
+		cErr := make(chan error, 1)
+
+		go func() {
+			log.Infof("Clean stage %d-%s", i, s.name)
+			cErr <- s.Clean(ctx, a)
+		}()
+
+		select {
+		case <-cErr: //ingore err, just continue clean
+		case <-ctx.Done():
+			log.Warn("!!Clean timeount")
+			return
+		}
+	}
+}
+
 func (a *Application) runDaemons() error {
 
 	var (
 		ctx    context.Context
 		cancel context.CancelFunc
-		cErr   = make(chan error, 1)
+		cErr   = make(chan error, len(a.daemons))
 		cDone  = make(chan interface{}, 1)
 	)
 
@@ -291,6 +372,7 @@ __daemon_loop:
 			log.WithError(err).Errorf("!!Daemon err, exit in %s ...", a.daemonForceCloseTimeout.String())
 			cancel()
 			isCanceled = true
+			cErr = nil // set cErr to nil to ignore other daemon fail
 		case <-closeTimer:
 			log.Infof("!!Daemon exit after %s", a.daemonForceCloseTimeout.String())
 			break __daemon_loop
@@ -307,13 +389,15 @@ func (a *Application) Run() {
 	log.Infof("Application %s starting...", a.name)
 
 	if err = a.runInitStages(); err != nil {
-		panic(err)
+		a.runCleanStage()
+		log.WithError(err).Panic("Application fail to init!")
 	}
 
 	log.Infof("All init stage done, starting daemons...")
 
 	if err = a.runDaemons(); err != nil {
-		panic(err)
+		a.runCleanStage()
+		log.WithError(err).Panic("Application fail to run daemon!")
 	}
 	log.Infof("App %s done", a.name)
 }
