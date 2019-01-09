@@ -23,16 +23,12 @@ const (
 	FlagDebugAddr    = "debugserver.addr"
 )
 
-func init() {
-	RegisterHttpMux(debugServeMux)
-}
-
 var indexHtml = `
 <html>
 	<h1>Debug server</h1>
 	<ul>
-		<li><a href="{{.Prefix}}/pprof">pprof</a></li>
-		<li><a href="{{.Prefix}}/vars">vars</a></li>
+		<li><a href="{{.Prefix}}pprof">pprof</a></li>
+		<li><a href="{{.Prefix}}vars">vars</a></li>
 	</ul>
 </html>
 `
@@ -66,5 +62,5 @@ func Run(ctx context.Context) error {
 	}
 
 	log.Infof("Debug server start at %s", addr)
-	return http.ListenAndServe(addr, debugServeMux)
+	return http.ListenAndServe(addr, RegisterHttpMux(debugServeMux))
 }

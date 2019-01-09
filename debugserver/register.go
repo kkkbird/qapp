@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterHttpMux(mux *http.ServeMux, prefixOptions ...string) {
+func RegisterHttpMux(mux *http.ServeMux, prefixOptions ...string) *http.ServeMux {
 	prefix := getPrefix(prefixOptions...)
 
 	mux.HandleFunc(prefix+"/", debugIndex)
@@ -19,6 +19,7 @@ func RegisterHttpMux(mux *http.ServeMux, prefixOptions ...string) {
 	mux.HandleFunc(prefix+"/pprof/trace", pprof.Trace)
 
 	mux.Handle(prefix+"/vars", expvar.Handler())
+	return mux
 }
 
 // copy from https://github.com/gin-contrib/pprof/
@@ -38,28 +39,31 @@ func getPrefix(prefixOptions ...string) string {
 // Register the standard HandlerFuncs from the net/http/pprof package with
 // the provided gin.Engine. prefixOptions is a optional. If not prefixOptions,
 // the default path prefix is used, otherwise first prefixOptions will be path prefix.
-func RegisterGin(r *gin.Engine, prefixOptions ...string) {
+func RegisterGin(r *gin.Engine, prefixOptions ...string) *gin.RouterGroup {
 	prefix := getPrefix(prefixOptions...)
 
-	r.GET(prefix, pprofHandler(debugIndex))
-
-	prefixPprof := r.Group(prefix + "/pprof")
+	debugGroup := r.Group(prefix)
 	{
-		prefixPprof.GET("/", pprofHandler(pprof.Index))
-		prefixPprof.GET("/cmdline", pprofHandler(pprof.Cmdline))
-		prefixPprof.GET("/profile", pprofHandler(pprof.Profile))
-		prefixPprof.POST("/symbol", pprofHandler(pprof.Symbol))
-		prefixPprof.GET("/symbol", pprofHandler(pprof.Symbol))
-		prefixPprof.GET("/trace", pprofHandler(pprof.Trace))
-		prefixPprof.GET("/allocs", pprofHandler(pprof.Handler("allocs").ServeHTTP))
-		prefixPprof.GET("/block", pprofHandler(pprof.Handler("block").ServeHTTP))
-		prefixPprof.GET("/goroutine", pprofHandler(pprof.Handler("goroutine").ServeHTTP))
-		prefixPprof.GET("/heap", pprofHandler(pprof.Handler("heap").ServeHTTP))
-		prefixPprof.GET("/mutex", pprofHandler(pprof.Handler("mutex").ServeHTTP))
-		prefixPprof.GET("/threadcreate", pprofHandler(pprof.Handler("threadcreate").ServeHTTP))
-	}
+		debugGroup.GET("/", pprofHandler(debugIndex))
 
-	r.GET(prefix+"/vars", pprofHandler(expvar.Handler().ServeHTTP))
+		prefixPprof := debugGroup.Group("/pprof")
+		{
+			prefixPprof.GET("/", pprofHandler(pprof.Index))
+			prefixPprof.GET("/cmdline", pprofHandler(pprof.Cmdline))
+			prefixPprof.GET("/profile", pprofHandler(pprof.Profile))
+			prefixPprof.POST("/symbol", pprofHandler(pprof.Symbol))
+			prefixPprof.GET("/symbol", pprofHandler(pprof.Symbol))
+			prefixPprof.GET("/trace", pprofHandler(pprof.Trace))
+			prefixPprof.GET("/allocs", pprofHandler(pprof.Handler("allocs").ServeHTTP))
+			prefixPprof.GET("/block", pprofHandler(pprof.Handler("block").ServeHTTP))
+			prefixPprof.GET("/goroutine", pprofHandler(pprof.Handler("goroutine").ServeHTTP))
+			prefixPprof.GET("/heap", pprofHandler(pprof.Handler("heap").ServeHTTP))
+			prefixPprof.GET("/mutex", pprofHandler(pprof.Handler("mutex").ServeHTTP))
+			prefixPprof.GET("/threadcreate", pprofHandler(pprof.Handler("threadcreate").ServeHTTP))
+		}
+		debugGroup.GET("/vars", pprofHandler(expvar.Handler().ServeHTTP))
+	}
+	return debugGroup
 }
 
 func pprofHandler(h http.HandlerFunc) gin.HandlerFunc {
