@@ -210,7 +210,7 @@ func (a *Application) runInitStages() error {
 				return err
 			}
 		case err = <-a.initErrChan:
-			log.Infof("!!Init err:%s, exit in %s ...", err, a.initForceCloseTimeout.String())
+			log.WithError(err).Errorf("!!Init err, exit in %s ...", a.initForceCloseTimeout.String())
 			cancel()
 			select { // wait the init stage done or initForceCloseTimeout duration
 			case <-cErr:
@@ -218,7 +218,7 @@ func (a *Application) runInitStages() error {
 			}
 			return err
 		case <-ctx.Done():
-			log.Infof("!!Init timeount, exit in %s ...", a.initForceCloseTimeout.String())
+			log.Errorf("!!Init timeount, exit in %s ...", a.initForceCloseTimeout.String())
 			select { // wait the init stage done or initForceCloseTimeout duration
 			case <-cErr:
 			case <-time.After(a.initForceCloseTimeout):
@@ -288,7 +288,7 @@ __daemon_loop:
 
 		select {
 		case err = <-cErr:
-			log.Infof("!!Daemon err:%s, exit in %s ...", err, a.daemonForceCloseTimeout.String())
+			log.WithError(err).Errorf("!!Daemon err, exit in %s ...", a.daemonForceCloseTimeout.String())
 			cancel()
 			isCanceled = true
 		case <-closeTimer:
