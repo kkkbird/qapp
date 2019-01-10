@@ -8,7 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterHttpMux(mux *http.ServeMux, prefixOptions ...string) *http.ServeMux {
+func RegisterHTTPMux(mux *http.ServeMux, prefixOptions ...string) *http.ServeMux {
 	prefix := getPrefix(prefixOptions...)
 
 	mux.HandleFunc(prefix+"/", debugIndex)
@@ -36,7 +36,7 @@ func getPrefix(prefixOptions ...string) string {
 	return prefix
 }
 
-// Register the standard HandlerFuncs from the net/http/pprof package with
+// RegisterGin the standard HandlerFuncs from the net/http/pprof package with
 // the provided gin.Engine. prefixOptions is a optional. If not prefixOptions,
 // the default path prefix is used, otherwise first prefixOptions will be path prefix.
 func RegisterGin(r *gin.Engine, prefixOptions ...string) *gin.RouterGroup {

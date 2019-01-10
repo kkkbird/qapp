@@ -23,7 +23,7 @@ const (
 	FlagDebugAddr    = "debugserver.addr"
 )
 
-var indexHtml = `
+var indexHTML = `
 <html>
 	<h1>Debug server</h1>
 	<ul>
@@ -34,7 +34,7 @@ var indexHtml = `
 `
 
 func debugIndex(w http.ResponseWriter, r *http.Request) {
-	t := template.Must(template.New("index").Parse(indexHtml))
+	t := template.Must(template.New("index").Parse(indexHTML))
 
 	t.Execute(w, map[string]interface{}{
 		"Prefix": r.URL.Path,
@@ -62,5 +62,5 @@ func Run(ctx context.Context) error {
 	}
 
 	log.Infof("Debug server start at %s", addr)
-	return http.ListenAndServe(addr, RegisterHttpMux(debugServeMux))
+	return http.ListenAndServe(addr, RegisterHTTPMux(debugServeMux))
 }

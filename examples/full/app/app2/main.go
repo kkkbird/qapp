@@ -12,7 +12,7 @@ import (
 
 const (
 	appName = "app2"
-	addr    = ":8082"
+	addr    = ":8088"
 )
 
 func initDB(ctx context.Context) (bshark.CleanFunc, error) {
@@ -25,7 +25,7 @@ func runHTTPServer(ctx context.Context) error {
 	r := gin.Default()
 	debugserver.RegisterGin(r, "/dev")
 
-	return r.Run()
+	return r.Run(addr)
 }
 
 func main() {
