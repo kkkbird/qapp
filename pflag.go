@@ -37,7 +37,7 @@ func (a *Application) handleFlagsAndEnv() {
 		if a.onConfigFileChanged != nil {
 			viper.WatchConfig()
 			viper.OnConfigChange(func(e fsnotify.Event) {
-				log.Debugln("Config file changed:", e.Name)
+				log.Trace("Config file changed:", e.Name)
 				a.onConfigFileChanged()
 			})
 		}
