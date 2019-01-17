@@ -136,11 +136,12 @@ type Application struct {
 	cleanTimeout            time.Duration // default 1s
 	daemonForceCloseTimeout time.Duration // default 1s
 
-	preInit             func()
+	preload             func() error
 	onConfigFileChanged func()
 	cmdline             *pflag.FlagSet
 	name                string
 	initStages          []*InitStage
+	initedStageIdx      int
 	daemons             []DaemonFunc
 }
 
@@ -199,14 +200,13 @@ func New(name string, opts ...AppOpts) *Application {
 		opt(app)
 	}
 
-	app.AddInitStage("preInit", app.initParams).AddDaemons(debugserver.Run)
+	app.AddInitStage("preload", app.initParams).AddDaemons(debugserver.Run)
 
 	return app
 }
 
 func (a *Application) initParams(ctx context.Context) (CleanFunc, error) {
-	a.handleFlagsAndEnv()
-	return nil, nil
+	return nil, a.handleFlagsAndEnv()
 }
 
 // func (a *Application) printf(format string, args ...interface{}) {
@@ -250,6 +250,7 @@ func (a *Application) runInitStages() error {
 
 		go func() {
 			log.Infof("Init stage %d-%s", i, s.name)
+			a.initedStageIdx = i
 			cErr <- s.Run(ctx, a)
 		}()
 
@@ -296,7 +297,7 @@ func (a *Application) runCleanStage() {
 	defer cancel()
 
 	// run clean stage in reverse order
-	for i := len(a.initStages) - 1; i >= 0; i-- {
+	for i := a.initedStageIdx; i > 0; i-- { // i==0 is preload,
 		s := a.initStages[i]
 		cErr := make(chan error, 1)
 

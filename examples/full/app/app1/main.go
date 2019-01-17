@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/kkkbird/bshark"
-	"github.com/kkkbird/bshark/debugserver"
 	"github.com/kkkbird/bshark/examples/full/pkg/db"
 	"github.com/kkkbird/bshark/examples/full/pkg/httpsrv"
 	"github.com/spf13/pflag"
@@ -16,12 +15,12 @@ const (
 	addr    = ":8080"
 )
 
-func preInit() {
+func preload() error {
 	pflag.String("token", "app1", "appname")
 	pflag.String("addr", ":8080", "listen address")
 
-	viper.RegisterAlias(debugserver.FlagDebugToken, "token")
 	//viper.Set("file", "app.yml")
+	return nil
 }
 
 func initDB(ctx context.Context) (bshark.CleanFunc, error) {
@@ -39,7 +38,7 @@ func onConfigChange() {
 }
 
 func main() {
-	bshark.New(appName, bshark.WithPreInit(preInit), bshark.WithConfigChanged(onConfigChange)).
+	bshark.New(appName, bshark.WithPreload(preload), bshark.WithConfigChanged(onConfigChange)).
 		AddInitStage("initDB", initDB).
 		AddDaemons(runHTTPServer).
 		Run()

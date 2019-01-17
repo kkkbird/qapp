@@ -106,13 +106,17 @@ func runHTTPServerDummy(port string) bshark.DaemonFunc {
 	}
 }
 
+func preload() error {
+	return nil
+}
+
 func main() {
-	bshark.New("mytestapp", bshark.WithInitTimeout(3*time.Second)).
+	bshark.New("mytestapp", bshark.WithInitTimeout(3*time.Second), bshark.WithPreload(preload)).
 		AddInitStage("initDB", initDBSimple).
 		AddInitStage("initDBs", initDBDummy(2), initDBDummy(3), initDBDummy(4)).
 		//AddInitStage("initDbs2", initDBSimpleTimeout, initDBSimpleTimeoutWithContext, initDBSimpleFail).
 		AddInitStage("initHTTPServer", initHTTPServer).
-		AddDaemons(runHTTPServerSimple, runHTTPServerDummy(":18080")).
+		AddDaemons(runHTTPServerDummy(":18080")).
 		AddDaemons(runHTTPServerDummy(":18081"), runHTTPServerDummy(":18082")).
 		//AddDaemons(runDaemonFail).
 		Run()
