@@ -39,6 +39,7 @@ type CleanFunc func(ctx context.Context)
 
 //InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
 type InitStage struct {
+	mu         sync.Mutex
 	name       string
 	funcs      []InitFunc
 	cleanFuncs []CleanFunc
@@ -71,10 +72,12 @@ func (s *InitStage) Run(ctx context.Context, a *Application) error {
 			}
 			// no need to add clean func if err != nil
 			if cleanFunc != nil {
+				s.mu.Lock()
 				if s.cleanFuncs == nil {
 					s.cleanFuncs = make([]CleanFunc, 0)
 				}
 				s.cleanFuncs = append(s.cleanFuncs, cleanFunc)
+				s.mu.Unlock()
 			}
 
 			log.Tracef("  %s() done!", funcName)
@@ -368,18 +371,20 @@ func (a *Application) runDaemons() error {
 __daemon_loop:
 	for {
 		var closeTimer <-chan time.Time
+		var daemonErrChan <-chan error
 		if isCanceled {
 			closeTimer = time.After(a.daemonForceCloseTimeout)
+			daemonErrChan = nil
 		} else {
 			closeTimer = nil
+			daemonErrChan = cErr
 		}
 
 		select {
-		case err = <-cErr:
+		case err = <-daemonErrChan:
 			log.WithError(err).Errorf("!!Daemon err, exit in %s ...", a.daemonForceCloseTimeout.String())
 			cancel()
 			isCanceled = true
-			cErr = nil    // set cErr to nil to ignore other daemon fail
 			cSignal = nil // set cSignal to nil to ignore multi signal
 		case <-closeTimer:
 			log.Infof("!!Daemon exit after %s", a.daemonForceCloseTimeout.String())
@@ -391,7 +396,6 @@ __daemon_loop:
 			log.Infof("!!Received signal:%s, exit in %s ...", s, a.daemonForceCloseTimeout.String())
 			cancel()
 			isCanceled = true
-			cErr = nil    // set cErr to nil to ignore other daemon fail
 			cSignal = nil // set cSignal to nil to ignore multi signal
 		}
 	}
