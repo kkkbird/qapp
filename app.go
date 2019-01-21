@@ -313,7 +313,7 @@ func (a *Application) runCleanStage() {
 		select {
 		case <-cErr: //ingore err, just continue clean
 		case <-ctx.Done():
-			log.Warn("!!Clean timeount")
+			log.Warn("!!Clean timeout")
 			return
 		}
 	}
@@ -412,13 +412,13 @@ func (a *Application) Run() {
 	defer a.runCleanStage()
 
 	if err = a.runInitStages(); err != nil {
-		log.WithError(err).Panic("Application fail to init!")
+		return //log.WithError(err).Panic("Application fail to init!")
 	}
 
 	log.Infof("All init stage done, starting daemons...")
 
 	if err = a.runDaemons(); err != nil {
-		log.WithError(err).Panic("Application fail to run daemon!")
+		return //log.WithError(err).Panic("Application fail to run daemon!")
 	}
 	log.Infof("Application [%s] done", a.name)
 }
