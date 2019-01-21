@@ -59,6 +59,7 @@ func (s *InitStage) Run(ctx context.Context, a *Application) error {
 
 			defer func() {
 				if r := recover(); r != nil {
+					log.Errorf("bshark init catch panic: %s\n%s\n", r, stack(6))
 					a.initErrChan <- fmt.Errorf("%s() panic:%s", funcName, r)
 				}
 			}()
@@ -108,7 +109,7 @@ func (s *InitStage) Clean(ctx context.Context, a *Application) error {
 
 			defer func() {
 				if r := recover(); r != nil {
-					log.Errorf("clean %s() panic:%s", funcName, r)
+					log.Errorf("bshark clean catch panic: %s\n%s\n", r, stack(6))
 				}
 			}()
 
@@ -344,6 +345,7 @@ func (a *Application) runDaemons() error {
 
 				defer func() {
 					if r := recover(); r != nil {
+						log.Errorf("bshark daemon catch panic: %s\n%s\n", r, stack(6))
 						cErr <- fmt.Errorf("%s() panic:%s", funcName, r)
 					}
 				}()
