@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/kkkbird/bshark/debugserver"
+	"github.com/kkkbird/bshark/qhttp"
+
+	"github.com/kkkbird/bshark/qdebugserver"
 
 	"github.com/gin-gonic/gin"
 	"github.com/kkkbird/bshark"
@@ -23,9 +25,11 @@ func initDB(ctx context.Context) (bshark.CleanFunc, error) {
 
 func runHTTPServer(ctx context.Context) error {
 	r := gin.Default()
-	debugserver.RegisterGin(r, "/dev")
+	qdebugserver.RegisterGin(r, "/dev")
 
-	return r.Run(addr)
+	//return r.Run(addr)
+
+	return qhttp.RunServer(ctx, addr, r)
 }
 
 func main() {

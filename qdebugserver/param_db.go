@@ -1,4 +1,4 @@
-package debugserver
+package qdebugserver
 
 import (
 	"database/sql"

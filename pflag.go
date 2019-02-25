@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/kkkbird/bshark/debugserver"
+	"github.com/kkkbird/bshark/qdebugserver"
 	"github.com/kkkbird/qlog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
@@ -12,7 +12,7 @@ import (
 
 func (a *Application) handleFlagsAndEnv() error {
 	var err error
-	debugserver.RegisteDebugServerPFlags()
+	qdebugserver.RegisteDebugServerPFlags()
 	pflag.StringP("file", "f", "app.yml", "config file name")
 
 	if a.preload != nil {

@@ -1,10 +1,12 @@
-package debugserver
+package qdebugserver
 
 import (
 	"context"
 	"expvar"
 	"html/template"
 	"net/http"
+
+	"github.com/kkkbird/bshark/qhttp"
 
 	"github.com/spf13/viper"
 
@@ -62,5 +64,6 @@ func Run(ctx context.Context) error {
 	}
 
 	log.Infof("Debug server start at %s", addr)
-	return http.ListenAndServe(addr, RegisterHTTPMux(debugServeMux))
+	//return http.ListenAndServe(addr, RegisterHTTPMux(debugServeMux))
+	return qhttp.RunServer(ctx, addr, RegisterHTTPMux(debugServeMux))
 }

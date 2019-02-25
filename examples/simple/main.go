@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/kkkbird/bshark/qhttp"
+
 	"github.com/kkkbird/bshark"
 	log "github.com/kkkbird/qlog"
 )
@@ -79,11 +81,13 @@ func runHTTPServerSimple(ctx context.Context) error {
 
 	log.WithField("name", name).WithField("port", port).Debugf("Run runHTTPServerSimple()")
 
-	server := &http.Server{
-		Addr:    port,
-		Handler: srv,
-	}
-	return server.ListenAndServe()
+	// server := &http.Server{
+	// 	Addr:    port,
+	// 	Handler: srv,
+	// }
+	// return server.ListenAndServe()
+
+	return qhttp.RunServer(ctx, port, srv)
 }
 
 func runDaemonFail(ctx context.Context) error {
@@ -97,12 +101,13 @@ func runHTTPServerDummy(port string) bshark.DaemonFunc {
 
 		log.WithField("name", port).WithField("port", port).Debugf("Run runHTTPServerDummy()")
 
-		server := &http.Server{
-			Addr:    port,
-			Handler: srv,
-		}
+		// server := &http.Server{
+		// 	Addr:    port,
+		// 	Handler: srv,
+		// }
 
-		return server.ListenAndServe()
+		// return server.ListenAndServe()
+		return qhttp.RunServer(ctx, port, srv)
 	}
 }
 

@@ -13,7 +13,7 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/kkkbird/bshark/debugserver"
+	"github.com/kkkbird/bshark/qdebugserver"
 	"github.com/kkkbird/qlog"
 )
 
@@ -204,7 +204,7 @@ func New(name string, opts ...AppOpts) *Application {
 		opt(app)
 	}
 
-	app.AddInitStage("preload", app.initParams).AddDaemons(debugserver.Run)
+	app.AddInitStage("preload", app.initParams).AddDaemons(qdebugserver.Run)
 
 	return app
 }
