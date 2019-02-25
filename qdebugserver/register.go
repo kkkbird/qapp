@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// RegisterHTTPMux register HTTP mux
 func RegisterHTTPMux(mux *http.ServeMux, prefixOptions ...string) *http.ServeMux {
 	prefix := getPrefix(prefixOptions...)
 

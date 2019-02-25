@@ -7,6 +7,7 @@ import (
 	"os/signal"
 	"reflect"
 	"runtime"
+	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -34,7 +35,7 @@ type DaemonFunc func(ctx context.Context) error
 // InitFunc for bshark app init modules
 type InitFunc func(ctx context.Context) (CleanFunc, error)
 
-// ClearFunc for bshark app, clean init module
+// CleanFunc for bshark app, clean init module
 type CleanFunc func(ctx context.Context)
 
 //InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
@@ -262,11 +263,12 @@ func (a *Application) runInitStages() error {
 		case err = <-cErr:
 			if err != nil {
 				panic("shoud not run to this line")
-				return err
 			}
 		case err = <-a.initErrChan:
 			cancel()
-			log.WithError(err).Errorf("!!Init err, exit in 1s")
+			if !strings.HasSuffix(err.Error(), ErrShowVersion.Error()) {
+				log.WithError(err).Errorf("!!Init err, exit in 1s")
+			}
 			select { // wait the init stage done or cleanTimeout duration
 			case <-cErr:
 			case <-time.After(time.Second):
@@ -407,6 +409,7 @@ __daemon_loop:
 // Run run bshark app, it should be called at last
 func (a *Application) Run() {
 	var err error
+
 	log.Infof("Application [%s] starting...", a.name)
 
 	defer a.runCleanStage()

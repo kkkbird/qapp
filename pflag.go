@@ -1,6 +1,7 @@
 package bshark
 
 import (
+	"errors"
 	"os"
 
 	"github.com/fsnotify/fsnotify"
@@ -10,10 +11,17 @@ import (
 	"github.com/spf13/viper"
 )
 
+// Predefined errors
+var (
+	ErrShowVersion = errors.New("ErrShowVersion")
+)
+
 func (a *Application) handleFlagsAndEnv() error {
 	var err error
 	qdebugserver.RegisteDebugServerPFlags()
+
 	pflag.StringP("file", "f", "app.yml", "config file name")
+	pflag.BoolP("version", "v", false, "show version")
 
 	if a.preload != nil {
 		if err = a.preload(); err != nil {
@@ -29,6 +37,12 @@ func (a *Application) handleFlagsAndEnv() error {
 
 	// bind env
 	viper.AutomaticEnv()
+
+	// if just show version
+	if viper.GetBool("version") {
+		showAppVersion(a.name)
+		return ErrShowVersion
+	}
 
 	// read from config file
 	viper.SetConfigFile(viper.GetString("file"))
