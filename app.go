@@ -1,6 +1,7 @@
 package bshark
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"os"
@@ -211,7 +212,19 @@ func New(name string, opts ...AppOpts) *Application {
 }
 
 func (a *Application) initParams(ctx context.Context) (CleanFunc, error) {
-	return nil, a.handleFlagsAndEnv()
+	var err error
+
+	if err = a.handleFlagsAndEnv(); err != nil {
+		return nil, err
+	}
+
+	buf := bytes.NewBufferString("")
+	showAppVersion(buf, a.name)
+	for _, s := range strings.Split(buf.String(), "\n") {
+		log.Debug(s)
+	}
+
+	return nil, err
 }
 
 // func (a *Application) printf(format string, args ...interface{}) {

@@ -40,7 +40,7 @@ func (a *Application) handleFlagsAndEnv() error {
 
 	// if just show version
 	if viper.GetBool("version") {
-		showAppVersion(a.name)
+		showAppVersion(os.Stdout, a.name)
 		return ErrShowVersion
 	}
 

@@ -1,7 +1,7 @@
 package bshark
 
 import (
-	"os"
+	"io"
 	"text/template"
 )
 
@@ -21,10 +21,10 @@ App: {{.Name}}
   Go version:   {{.GoVersion}}
 `
 
-func showAppVersion(name string) error {
+func showAppVersion(w io.Writer, name string) error {
 	t := template.Must(template.New("version").Parse(versionTemplate))
 
-	err := t.Execute(os.Stdout, map[string]string{
+	err := t.Execute(w, map[string]string{
 		"Name":      name,
 		"Version":   Version,
 		"BuildTime": BuildTime,
