@@ -14,7 +14,7 @@ var (
 
 // RunServer run a http server with gracefully shutdown
 func RunServer(ctx context.Context, addr string, handler http.Handler) (err error) {
-	log.Debugf("Listening and serving HTTP on %s\n", addr)
+	log.Debugf("Listening and serving HTTP on %s", addr)
 
 	srv := &http.Server{
 		Addr:    addr,
