@@ -1,7 +1,9 @@
 package qdebugserver
 
 import (
+	"encoding/json"
 	"expvar"
+	"io"
 	"net/http"
 	"net/http/pprof"
 
@@ -20,6 +22,11 @@ func RegisterHTTPMux(mux *http.ServeMux, prefixOptions ...string) *http.ServeMux
 	mux.HandleFunc(prefix+"/pprof/trace", pprof.Trace)
 
 	mux.Handle(prefix+"/vars", expvar.Handler())
+
+	mux.HandleFunc(prefix+"/healthz", healthHandler)
+	mux.HandleFunc(prefix+"/readyz", readyzHandler)
+	mux.HandleFunc(prefix+"/version", versionHandler)
+
 	return mux
 }
 
@@ -63,6 +70,10 @@ func RegisterGin(r *gin.Engine, prefixOptions ...string) *gin.RouterGroup {
 			prefixPprof.GET("/threadcreate", pprofHandler(pprof.Handler("threadcreate").ServeHTTP))
 		}
 		debugGroup.GET("/vars", pprofHandler(expvar.Handler().ServeHTTP))
+
+		debugGroup.GET("/healthz", pprofHandler(healthHandler))
+		debugGroup.GET("/readyz", pprofHandler(readyzHandler))
+		debugGroup.GET("/version", pprofHandler(versionHandler))
 	}
 	return debugGroup
 }
@@ -72,4 +83,42 @@ func pprofHandler(h http.HandlerFunc) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		handler.ServeHTTP(c.Writer, c.Request)
 	}
+}
+
+var (
+	userReadyzHandler http.HandlerFunc
+	versions          map[string]string
+)
+
+// SetUserReadyzHandler set user specified readyz handler
+func SetUserReadyzHandler(handleFunc http.HandlerFunc) {
+	userReadyzHandler = handleFunc
+}
+
+// SetVersionInfo set app version
+func SetVersionInfo(ver map[string]string) {
+	versions = ver
+}
+
+func readyzHandler(w http.ResponseWriter, r *http.Request) {
+	if userReadyzHandler != nil {
+		userReadyzHandler(w, r)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
+}
+
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(http.StatusOK)
+}
+
+func versionHandler(w http.ResponseWriter, r *http.Request) {
+	s, err := json.Marshal(versions)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		io.WriteString(w, "marshal error:")
+		io.WriteString(w, err.Error())
+		return
+	}
+	w.Write(s)
 }

@@ -3,6 +3,8 @@ package bshark
 import (
 	"io"
 	"text/template"
+
+	"github.com/kkkbird/bshark/qdebugserver"
 )
 
 // predefined version params
@@ -33,4 +35,13 @@ func showAppVersion(w io.Writer, name string) error {
 	})
 
 	return err
+}
+
+func init() {
+	qdebugserver.SetVersionInfo(map[string]string{
+		"Version":   Version,
+		"BuildTime": BuildTime,
+		"GitHash":   GitHash,
+		"GoVersion": GoVersion,
+	})
 }
