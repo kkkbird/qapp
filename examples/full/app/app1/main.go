@@ -3,9 +3,9 @@ package main
 import (
 	"context"
 
-	"github.com/kkkbird/bshark"
-	"github.com/kkkbird/bshark/examples/full/pkg/db"
-	"github.com/kkkbird/bshark/examples/full/pkg/httpsrv"
+	"github.com/kkkbird/qapp"
+	"github.com/kkkbird/qapp/examples/full/pkg/db"
+	"github.com/kkkbird/qapp/examples/full/pkg/httpsrv"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 )
@@ -23,7 +23,7 @@ func preload() error {
 	return nil
 }
 
-func initDB(ctx context.Context) (bshark.CleanFunc, error) {
+func initDB(ctx context.Context) (qapp.CleanFunc, error) {
 	db.Init(ctx, appName)
 
 	return nil, nil
@@ -38,7 +38,7 @@ func onConfigChange() {
 }
 
 func main() {
-	bshark.New(appName, bshark.WithPreload(preload), bshark.WithConfigChanged(onConfigChange)).
+	qapp.New(appName, qapp.WithPreload(preload), qapp.WithConfigChanged(onConfigChange)).
 		AddInitStage("initDB", initDB).
 		AddDaemons(runHTTPServer).
 		Run()

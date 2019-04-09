@@ -3,13 +3,13 @@ package main
 import (
 	"context"
 
-	"github.com/kkkbird/bshark/qhttp"
+	"github.com/kkkbird/qapp/qhttp"
 
-	"github.com/kkkbird/bshark/qdebugserver"
+	"github.com/kkkbird/qapp/qdebugserver"
 
 	"github.com/gin-gonic/gin"
-	"github.com/kkkbird/bshark"
-	"github.com/kkkbird/bshark/examples/full/pkg/db"
+	"github.com/kkkbird/qapp"
+	"github.com/kkkbird/qapp/examples/full/pkg/db"
 )
 
 const (
@@ -17,7 +17,7 @@ const (
 	addr    = ":8088"
 )
 
-func initDB(ctx context.Context) (bshark.CleanFunc, error) {
+func initDB(ctx context.Context) (qapp.CleanFunc, error) {
 	db.Init(ctx, appName)
 
 	return nil, nil
@@ -33,7 +33,7 @@ func runHTTPServer(ctx context.Context) error {
 }
 
 func main() {
-	bshark.New(appName).
+	qapp.New(appName).
 		AddInitStage("initDB", initDB).
 		AddDaemons(runHTTPServer).
 		Run()

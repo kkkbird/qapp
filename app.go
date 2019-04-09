@@ -1,4 +1,4 @@
-package bshark
+package qapp
 
 import (
 	"bytes"
@@ -15,11 +15,11 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/kkkbird/bshark/qdebugserver"
+	"github.com/kkkbird/qapp/qdebugserver"
 	"github.com/kkkbird/qlog"
 )
 
-var log = qlog.WithField("bshark", "application")
+var log = qlog.WithField("qapp", "application")
 
 func getFuncName(f interface{}) string {
 	fv := reflect.ValueOf(f)
@@ -30,13 +30,13 @@ func getFuncName(f interface{}) string {
 	return runtime.FuncForPC(fv.Pointer()).Name()
 }
 
-// DaemonFunc for bshark app daemon modules
+// DaemonFunc for qapp app daemon modules
 type DaemonFunc func(ctx context.Context) error
 
-// InitFunc for bshark app init modules
+// InitFunc for qapp app init modules
 type InitFunc func(ctx context.Context) (CleanFunc, error)
 
-// CleanFunc for bshark app, clean init module
+// CleanFunc for qapp app, clean init module
 type CleanFunc func(ctx context.Context)
 
 //InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
@@ -61,7 +61,7 @@ func (s *InitStage) Run(ctx context.Context, a *Application) error {
 
 			defer func() {
 				if r := recover(); r != nil {
-					log.Errorf("bshark init catch panic: %s\n%s\n", r, stack(6))
+					log.Errorf("qapp init catch panic: %s\n%s\n", r, stack(6))
 					a.initErrChan <- fmt.Errorf("%s() panic:%s", funcName, r)
 				}
 			}()
@@ -111,7 +111,7 @@ func (s *InitStage) Clean(ctx context.Context, a *Application) error {
 
 			defer func() {
 				if r := recover(); r != nil {
-					log.Errorf("bshark clean catch panic: %s\n%s\n", r, stack(6))
+					log.Errorf("qapp clean catch panic: %s\n%s\n", r, stack(6))
 				}
 			}()
 
@@ -135,7 +135,7 @@ func newInitStage(name string, funcs []InitFunc) *InitStage {
 	}
 }
 
-// Application is a bshark app
+// Application is a qapp app
 type Application struct {
 	initTimeout             time.Duration
 	initErrChan             chan error
@@ -188,7 +188,7 @@ func WithDaemonForceCloseTimeout(timeout time.Duration) AppOpts {
 // 	}
 // }
 
-// New create a bshark app object
+// New create a qapp app object
 func New(name string, opts ...AppOpts) *Application {
 	app := &Application{
 		initTimeout:             0, // no timeout
@@ -236,13 +236,13 @@ func (a *Application) initParams(ctx context.Context) (CleanFunc, error) {
 // 	a.logger.Printf(format, args...)
 // }
 
-// AddInitStage add a stage for bshark app
+// AddInitStage add a stage for qapp app
 func (a *Application) AddInitStage(name string, funcs ...InitFunc) *Application {
 	a.initStages = append(a.initStages, newInitStage(name, funcs))
 	return a
 }
 
-// AddDaemons add a daemon for bshark app
+// AddDaemons add a daemon for qapp app
 func (a *Application) AddDaemons(funcs ...DaemonFunc) *Application {
 	a.daemons = append(a.daemons, funcs...)
 	return a
@@ -360,7 +360,7 @@ func (a *Application) runDaemons() error {
 
 				defer func() {
 					if r := recover(); r != nil {
-						log.Errorf("bshark daemon catch panic: %s\n%s\n", r, stack(6))
+						log.Errorf("qapp daemon catch panic: %s\n%s\n", r, stack(6))
 						cErr <- fmt.Errorf("%s() panic:%s", funcName, r)
 					}
 				}()
@@ -419,7 +419,7 @@ __daemon_loop:
 	return err
 }
 
-// Run run bshark app, it should be called at last
+// Run run qapp app, it should be called at last
 func (a *Application) Run() {
 	var err error
 

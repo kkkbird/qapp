@@ -1,10 +1,10 @@
-package bshark
+package qapp
 
 import (
 	"io"
 	"text/template"
 
-	"github.com/kkkbird/bshark/qdebugserver"
+	"github.com/kkkbird/qapp/qdebugserver"
 )
 
 // predefined version params

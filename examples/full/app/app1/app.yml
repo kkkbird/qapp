@@ -1,5 +1,5 @@
-token: abc123
-addr: ":8092"
+token: eee
+addr: ":8012"
 
 debugserver:
   enabled: true

@@ -1,11 +1,11 @@
-package bshark
+package qapp
 
 import (
 	"errors"
 	"os"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/kkkbird/bshark/qdebugserver"
+	"github.com/kkkbird/qapp/qdebugserver"
 	"github.com/kkkbird/qlog"
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"

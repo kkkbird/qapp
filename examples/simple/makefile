@@ -1,10 +1,10 @@
 APP_NAME = .
 APP_VERSION = 0.0.1
 
-LDFLAGS += -X 'github.com/kkkbird/bshark.Version=$(APP_VERSION)'
-LDFLAGS += -X 'github.com/kkkbird/bshark.BuildTime=$(shell date -u '+%Y-%m-%d %I:%M:%S %Z')'
-LDFLAGS += -X 'github.com/kkkbird/bshark.GitHash=$(shell git rev-parse HEAD)'
-LDFLAGS += -X 'github.com/kkkbird/bshark.GoVersion=$(shell go version)'
+LDFLAGS += -X 'github.com/kkkbird/qapp.Version=$(APP_VERSION)'
+LDFLAGS += -X 'github.com/kkkbird/qapp.BuildTime=$(shell date -u '+%Y-%m-%d %I:%M:%S %Z')'
+LDFLAGS += -X 'github.com/kkkbird/qapp.GitHash=$(shell git rev-parse HEAD)'
+LDFLAGS += -X 'github.com/kkkbird/qapp.GoVersion=$(shell go version)'
 
 OS := $(shell uname)
 

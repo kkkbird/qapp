@@ -6,7 +6,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/kkkbird/bshark/qhttp"
+	"github.com/kkkbird/qapp/qhttp"
 
 	"github.com/spf13/viper"
 
@@ -17,7 +17,7 @@ import (
 
 var (
 	debugServeMux = http.NewServeMux()
-	log           = qlog.WithField("bshark", "debugserver")
+	log           = qlog.WithField("qapp", "debugserver")
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 
 var indexHTML = `
 <html>
-	<h1>bshark debug server</h1>
+	<h1>qapp debug server</h1>
 	<ul>
 		{{range $name, $value := .Versions}}
 		<li>{{$name}} : {{$value}}</li>

@@ -19,7 +19,7 @@ var (
 	restartChan = make(chan context.Context, 1)
 	errChan     = make(chan error, 1)
 
-	log = qlog.WithField("bshark", "gin")
+	log = qlog.WithField("qapp", "gin")
 )
 
 func qGinLogger(c *gin.Context) {

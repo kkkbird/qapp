@@ -1,7 +1,16 @@
 logger:
-  level: debug
+  level: info
   reportcaller: false
   formatter: 
     name: text
     opts:
       forcecolors: true
+
+  # file:
+  #   enabled: true
+  #   path: ./log
+  #   level: debug
+  #   formatter:
+  #     name: classic
+
+  

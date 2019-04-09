@@ -1,4 +1,4 @@
-package bshark
+package qapp
 
 import (
 	"bytes"
