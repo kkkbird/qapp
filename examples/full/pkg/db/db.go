@@ -3,7 +3,7 @@ package db
 import (
 	"context"
 
-	log "github.com/kkkbird/qlog"
+	log "github.com/sirupsen/logrus"
 )
 
 // InitDB is an example

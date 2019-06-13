@@ -10,7 +10,8 @@ import (
 	"github.com/kkkbird/qapp/qhttp"
 
 	"github.com/kkkbird/qapp"
-	log "github.com/kkkbird/qlog"
+	_ "github.com/kkkbird/qlog"
+	log "github.com/sirupsen/logrus"
 )
 
 func initDBSimple(ctx context.Context) (qapp.CleanFunc, error) {
