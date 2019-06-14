@@ -3,6 +3,7 @@ package qhttp
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net"
@@ -63,6 +64,10 @@ func PostJSON(url string, body interface{}, result interface{}) (resp *http.Resp
 		rspBody, err := ioutil.ReadAll(rsp.Body)
 		if err != nil {
 			return nil, err
+		}
+
+		if rsp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("Status(%d):%s", rsp.StatusCode, rspBody)
 		}
 
 		err = json.Unmarshal(rspBody, result)
