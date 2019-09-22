@@ -13,12 +13,18 @@ var (
 )
 
 // RunServer run a http server with gracefully shutdown
-func RunServer(ctx context.Context, addr string, handler http.Handler) (err error) {
+func RunServer(ctx context.Context, addr string, handler http.Handler, opts ...func(*http.Server)) (err error) {
 	log.Debugf("Listening and serving HTTP on %s", addr)
 
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: handler,
+	}
+
+	if opts != nil {
+		for _, optFunc := range opts {
+			optFunc(srv)
+		}
 	}
 
 	srvErrChan := make(chan error)
