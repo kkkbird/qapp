@@ -8,8 +8,6 @@ import (
 
 	"github.com/sirupsen/logrus"
 
-	"github.com/kkkbird/qlog"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -19,7 +17,7 @@ var (
 	restartChan = make(chan context.Context, 1)
 	errChan     = make(chan error, 1)
 
-	log = qlog.WithField("qapp", "gin")
+	log = logrus.WithField("app", "gin")
 )
 
 func qGinLogger(c *gin.Context) {

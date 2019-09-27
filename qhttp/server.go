@@ -5,11 +5,11 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/kkkbird/qlog"
+	"github.com/sirupsen/logrus"
 )
 
 var (
-	log = qlog.WithField("pkg", "qhttp")
+	log = logrus.WithField("pkg", "qhttp")
 )
 
 // RunServer run a http server with gracefully shutdown

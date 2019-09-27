@@ -1,4 +1,6 @@
 .vscode
 *.log
+**/logs
+go.sum
 examples/simple/simple
 examples/simple/debug

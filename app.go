@@ -16,10 +16,10 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/kkkbird/qapp/qdebugserver"
-	"github.com/kkkbird/qlog"
+	"github.com/sirupsen/logrus"
 )
 
-var log = qlog.WithField("qapp", "application")
+var log = logrus.WithField("pkg", "qapp")
 
 func getFuncName(f interface{}) string {
 	fv := reflect.ValueOf(f)

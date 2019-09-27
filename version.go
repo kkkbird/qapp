@@ -15,13 +15,11 @@ var (
 	GoVersion = "unknown-goversion"
 )
 
-var versionTemplate = `
-App: {{.Name}}
+var versionTemplate = `  App: {{.Name}}
   Version:      {{.Version}}
   Build time:   {{.BuildTime}}
   GitHash:      {{.GitHash}}
-  Go version:   {{.GoVersion}}
-`
+  Go version:   {{.GoVersion}}`
 
 func showAppVersion(w io.Writer, name string) error {
 	t := template.Must(template.New("version").Parse(versionTemplate))

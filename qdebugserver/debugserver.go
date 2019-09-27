@@ -10,14 +10,14 @@ import (
 
 	"github.com/spf13/viper"
 
-	"github.com/kkkbird/qlog"
+	"github.com/sirupsen/logrus"
 
 	"github.com/spf13/pflag"
 )
 
 var (
 	debugServeMux = http.NewServeMux()
-	log           = qlog.WithField("qapp", "debugserver")
+	log           = logrus.WithField("pkg", "debugserver")
 )
 
 const (
