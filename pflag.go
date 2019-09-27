@@ -3,6 +3,7 @@ package qapp
 import (
 	"errors"
 	"os"
+	"strings"
 
 	"github.com/fsnotify/fsnotify"
 	"github.com/kkkbird/qapp/qdebugserver"
@@ -37,6 +38,7 @@ func (a *Application) handleFlagsAndEnv() error {
 
 	// bind env
 	viper.AutomaticEnv()
+	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// if just show version
 	if viper.GetBool("version") {
