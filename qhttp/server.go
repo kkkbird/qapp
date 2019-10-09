@@ -15,7 +15,7 @@ var (
 	log = logrus.WithField("pkg", "qhttp")
 )
 
-// this function not work without tls enabled
+// GrpcHandlerFunc bind grpc server and http server to same port, but it not work without tls enabled
 // refer to https://github.com/dhrp/grpc-rest-go-example
 func GrpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -29,6 +29,13 @@ func GrpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 	})
 }
 
+// RunGRPCServer run a GRPC server with gracefule stop
+// example: 
+// func runGRPCServer(ctx context.Context) error {	
+//	 s := grpc.NewServer()
+// 	 pb.RegisterGreeterServer(s, &server{})
+// 	 return qhttp.RunGRPCServer(ctx, port, s)
+// }
 func RunGRPCServer(ctx context.Context, addr string, s *grpc.Server) (err error) {
 	srvErrChan := make(chan error)
 

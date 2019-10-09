@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	// QHTTPTransport is the default transport for qhttpclient
 	QHTTPTransport http.RoundTripper = &http.Transport{
 		Proxy: http.ProxyFromEnvironment,
 		DialContext: (&net.Dialer{
@@ -27,27 +28,33 @@ var (
 		ExpectContinueTimeout: 1 * time.Second,
 	}
 
+	// QHTTPClient is the default client
 	QHTTPClient = &http.Client{
 		Transport: QHTTPTransport,
 	}
 )
 
+// Get method
 func Get(url string) (resp *http.Response, err error) {
 	return QHTTPClient.Get(url)
 }
 
+// Post method
 func Post(url, contentType string, body io.Reader) (resp *http.Response, err error) {
 	return QHTTPClient.Post(url, contentType, body)
 }
 
+// PostForm method
 func PostForm(url string, data url.Values) (resp *http.Response, err error) {
 	return QHTTPClient.PostForm(url, data)
 }
 
+// Head method
 func Head(url string) (resp *http.Response, err error) {
 	return QHTTPClient.Head(url)
 }
 
+// PostJSON method
 func PostJSON(url string, body interface{}, result interface{}) (resp *http.Response, err error) {
 	b, err := json.Marshal(body)
 	if err != nil {
