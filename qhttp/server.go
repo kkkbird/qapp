@@ -30,8 +30,8 @@ func GrpcHandlerFunc(grpcServer *grpc.Server, otherHandler http.Handler) http.Ha
 }
 
 // RunGRPCServer run a GRPC server with gracefule stop
-// example: 
-// func runGRPCServer(ctx context.Context) error {	
+// example:
+// func runGRPCServer(ctx context.Context) error {
 //	 s := grpc.NewServer()
 // 	 pb.RegisterGreeterServer(s, &server{})
 // 	 return qhttp.RunGRPCServer(ctx, port, s)
@@ -45,6 +45,8 @@ func RunGRPCServer(ctx context.Context, addr string, s *grpc.Server) (err error)
 			log.WithError(err).Error("GRPC server listen fail")
 		}
 
+		log.Infof("Listening and serving gRPC on %s", addr)
+
 		srvErrChan <- s.Serve(lis)
 	}()
 
@@ -57,7 +59,7 @@ func RunGRPCServer(ctx context.Context, addr string, s *grpc.Server) (err error)
 
 		go func() {
 			s.GracefulStop()
-			log.Debug("GRPC server gracefully exit")
+			log.Infof("gRPC server %s gracefully exit", addr)
 			cancel()
 		}()
 
@@ -68,8 +70,6 @@ func RunGRPCServer(ctx context.Context, addr string, s *grpc.Server) (err error)
 
 // RunServer run a http server with gracefully shutdown
 func RunServer(ctx context.Context, addr string, handler http.Handler, opts ...func(*http.Server)) (err error) {
-	log.Debugf("Listening and serving HTTP on %s", addr)
-
 	srv := &http.Server{
 		Addr:    addr,
 		Handler: handler,
@@ -85,6 +85,8 @@ func RunServer(ctx context.Context, addr string, handler http.Handler, opts ...f
 
 	go func() {
 		// service connections
+		log.Infof("Listening and serving HTTP on %s", addr)
+
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.WithError(err).Error("HTTP server error")
 			srvErrChan <- err
@@ -104,6 +106,6 @@ func RunServer(ctx context.Context, addr string, handler http.Handler, opts ...f
 		}
 	}
 
-	log.Debug("HTTP server gracefully exit")
+	log.Infof("HTTP server %s gracefully exit", addr)
 	return nil
 }
