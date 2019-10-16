@@ -38,6 +38,9 @@ func (a *Application) handleFlagsAndEnv() error {
 
 	// bind env
 	viper.AutomaticEnv()
+	if len(a.envPrefix) > 0 {
+		viper.SetEnvPrefix(a.envPrefix)
+	}
 	viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// if just show version
@@ -84,5 +87,13 @@ func WithConfigChanged(onConfigChange func()) AppOpts {
 func WithPreload(preload func() error) AppOpts {
 	return func(a *Application) {
 		a.preload = preload
+	}
+}
+
+
+// WithEnvPrefix set env prefix, ex WithEnvPrefix("qapp"), envs used by qapp should be prefixed by "QAPP_"
+func WithEnvPrefix(envPrefix string) AppOpts {
+	return func(a *Application) {
+		a.envPrefix = envPrefix
 	}
 }

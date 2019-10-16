@@ -143,6 +143,7 @@ type Application struct {
 	daemonForceCloseTimeout time.Duration // default 1s
 
 	preload             func() error
+	envPrefix           string
 	onConfigFileChanged func()
 	cmdline             *pflag.FlagSet
 	name                string

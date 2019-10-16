@@ -117,7 +117,7 @@ func preload() error {
 }
 
 func main() {
-	qapp.New("mytestapp", qapp.WithInitTimeout(3*time.Second), qapp.WithPreload(preload)).
+	qapp.New("mytestapp", qapp.WithInitTimeout(3*time.Second), qapp.WithPreload(preload), qapp.WithEnvPrefix("QAPP")).
 		AddInitStage("initDB", initDBSimple).
 		AddInitStage("initDBs", initDBDummy(2), initDBDummy(3), initDBDummy(4)).
 		//AddInitStage("initDbs2", initDBSimpleTimeout, initDBSimpleTimeoutWithContext, initDBSimpleFail).
