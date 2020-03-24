@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"reflect"
 
-	"github.com/gomodule/redigo/redis"
+	"github.com/go-redis/redis/v7"
 )
 
 // SqlDBStats is the state of sqldb
@@ -40,21 +40,10 @@ func AddParamSqlDB(name string, sqlDB *sql.DB) {
 	AddParam(name, func() interface{} { return getSqlDBStatsReflect(sqlDB) })
 }
 
-type RedisStats struct {
-	ActiveCount int
-	IdleCount   int
-	MaxIdle     int
-	MaxActive   int
-}
+type RedisStats redis.PoolStats
 
-func AddParamRedis(name string, redisPool *redis.Pool) {
+func AddParamRedis(name string, client *redis.Client) {
 	AddParam(name, func() interface{} {
-		poolStats := redisPool.Stats()
-		return RedisStats{
-			ActiveCount: poolStats.ActiveCount,
-			IdleCount:   poolStats.IdleCount,
-			MaxIdle:     redisPool.MaxIdle,
-			MaxActive:   redisPool.MaxActive,
-		}
+		return client.PoolStats()
 	})
 }
