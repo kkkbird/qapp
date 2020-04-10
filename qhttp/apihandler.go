@@ -32,7 +32,10 @@ type APIResponse interface {
 }
 
 // APIMiddleware use as pre-handle the request after unmarshal
-type APIMiddleware func(c Context, req APIRequest) APIResponse
+type APIMiddleware func(c Context, req APIRequest) (APIResponse, APIMiddlewareDefer)
+
+// APIMiddlewareDefer used if APIMiddleware need something to free or call
+type APIMiddlewareDefer func(c Context, req APIRequest, rsp APIResponse)
 
 // GinAPIHandler implement the api handler using gin
 func GinAPIHandler(r APIRequest, middlewares ...APIMiddleware) gin.HandlerFunc {
@@ -53,8 +56,23 @@ func GinAPIHandler(r APIRequest, middlewares ...APIMiddleware) gin.HandlerFunc {
 			return
 		}
 
+		dfs := make([]APIMiddlewareDefer, 0)
+
+		defer func() {
+			for i := len(dfs) - 1; i >= 0; i-- {
+				dfs[i](c, req, rsp)
+			}
+		}()
+
+		var df APIMiddlewareDefer
+
 		for _, mw := range middlewares {
-			rsp = mw(c, req)
+			rsp, df = mw(c, req)
+
+			if df != nil {
+				dfs = append(dfs, df)
+			}
+
 			if rsp != nil {
 				return
 			}
