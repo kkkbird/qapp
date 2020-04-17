@@ -56,6 +56,34 @@ func Get(url string, reqOpts ...func(*http.Request)) (resp *http.Response, err e
 	return QHTTPClient.Do(req)
 }
 
+// GetJSON method
+func GetJSON(url string, result interface{}, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+	rsp, err := Get(url, reqOpts...)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if result != nil { //if result != nil, try Unmarshal the body
+		defer rsp.Body.Close()
+		rspBody, err := ioutil.ReadAll(rsp.Body)
+		if err != nil {
+			return nil, err
+		}
+
+		if rsp.StatusCode != http.StatusOK {
+			return nil, fmt.Errorf("Status(%d):%s", rsp.StatusCode, rspBody)
+		}
+
+		err = json.Unmarshal(rspBody, result)
+		if err != nil {
+			return rsp, err
+		}
+	}
+
+	return rsp, err
+}
+
 // Post method
 func Post(url, contentType string, body io.Reader, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", url, body)
