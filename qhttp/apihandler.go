@@ -56,6 +56,12 @@ func GinAPIHandler(r APIRequest, middlewares ...APIMiddleware) gin.HandlerFunc {
 			return
 		}
 
+		defer func() {
+			if err := recover(); err != nil {
+				rsp = req.RspInternalError(c, fmt.Errorf("panic: %v", err))
+			}
+		}()
+
 		dfs := make([]APIMiddlewareDefer, 0)
 
 		defer func() {
