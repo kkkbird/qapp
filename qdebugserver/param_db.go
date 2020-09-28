@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"reflect"
 
-	"github.com/go-redis/redis/v7"
+	"github.com/go-redis/redis/v8"
 )
 
 // SqlDBStats is the state of sqldb
