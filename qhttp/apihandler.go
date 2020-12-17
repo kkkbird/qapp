@@ -49,7 +49,14 @@ func GinAPIHandler(r APIRequest, middlewares ...APIMiddleware) gin.HandlerFunc {
 		}()
 
 		req := reflect.New(typ).Interface().(APIRequest)
-		err := c.ShouldBindJSON(req)
+
+		var err error
+
+		if len(c.ContentType()) == 0 { // try bind json if content-type absent
+			err = c.ShouldBindJSON(req)
+		} else {
+			err = c.ShouldBind(req)
+		}
 
 		if err != nil {
 			rsp = req.RspInvalidParam(c, err)
