@@ -11,6 +11,8 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/gin-gonic/gin/binding"
 )
 
 var (
@@ -43,8 +45,8 @@ func WithAuthorization(token string) func(*http.Request) {
 }
 
 // Get method
-func Get(url string, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
-	req, err := http.NewRequest("GET", url, nil)
+func Get(uri string, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -57,8 +59,8 @@ func Get(url string, reqOpts ...func(*http.Request)) (resp *http.Response, err e
 }
 
 // GetJSON method
-func GetJSON(url string, result interface{}, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
-	rsp, err := Get(url, reqOpts...)
+func GetJSON(uri string, result interface{}, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+	rsp, err := Get(uri, reqOpts...)
 
 	if err != nil {
 		return nil, err
@@ -85,8 +87,8 @@ func GetJSON(url string, result interface{}, reqOpts ...func(*http.Request)) (re
 }
 
 // Post method
-func Post(url, contentType string, body io.Reader, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
-	req, err := http.NewRequest("POST", url, body)
+func Post(uri, contentType string, body io.Reader, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+	req, err := http.NewRequest("POST", uri, body)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +103,13 @@ func Post(url, contentType string, body io.Reader, reqOpts ...func(*http.Request
 }
 
 // PostForm method
-func PostForm(url string, data url.Values, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
-	return Post(url, "application/x-www-form-urlencoded", strings.NewReader(data.Encode()), reqOpts...)
+func PostForm(uri string, data url.Values, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+	return Post(uri, binding.MIMEPOSTForm, strings.NewReader(data.Encode()), reqOpts...)
 }
 
 // Head method
-func Head(url string, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
-	req, err := http.NewRequest("HEAD", url, nil)
+func Head(uri string, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+	req, err := http.NewRequest("HEAD", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -118,13 +120,24 @@ func Head(url string, reqOpts ...func(*http.Request)) (resp *http.Response, err 
 }
 
 // PostJSON method
-func PostJSON(url string, body interface{}, result interface{}, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
-	b, err := json.Marshal(body)
-	if err != nil {
-		return nil, err
+func PostJSON(uri string, body interface{}, result interface{}, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+	var (
+		_b          []byte
+		contentType string
+	)
+
+	if _body, ok := body.(url.Values); ok {
+		_b = []byte(_body.Encode())
+		contentType = binding.MIMEPOSTForm
+	} else {
+		_b, err = json.Marshal(body)
+		if err != nil {
+			return nil, err
+		}
+		contentType = binding.MIMEJSON
 	}
 
-	rsp, err := Post(url, "application/json", bytes.NewReader(b), reqOpts...)
+	rsp, err := Post(uri, contentType, bytes.NewReader(_b), reqOpts...)
 
 	if err != nil {
 		return nil, err
