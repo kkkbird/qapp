@@ -95,8 +95,16 @@ func WithLimit(l *Limit) func(*http.Request) error {
 			defer cancel()
 		}
 
+		var key = l.Key
+
+		if key == "" {
+			key = req.Host + "/" + req.RequestURI
+		}
+
+		key = "qhttp:" + key
+
 		for {
-			rlt, err := l.Limiter.Allow(ctx, "qhttp:"+l.Key, l.Limit)
+			rlt, err := l.Limiter.Allow(ctx, key, l.Limit)
 			if err != nil {
 				return err
 			}
