@@ -174,7 +174,10 @@ func Post(uri, contentType string, body io.Reader, reqOpts ...func(*http.Request
 	req.Header.Set("Content-Type", contentType)
 
 	for _, f := range reqOpts {
-		f(req)
+		err := f(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return QHTTPClient.Do(req)
@@ -192,7 +195,10 @@ func Head(uri string, reqOpts ...func(*http.Request) error) (resp *http.Response
 		return nil, err
 	}
 	for _, f := range reqOpts {
-		f(req)
+		err := f(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return QHTTPClient.Do(req)
 }
