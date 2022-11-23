@@ -56,6 +56,13 @@ func WithAuthorization(token string) func(*http.Request) error {
 	}
 }
 
+func WithBasicAuthorization(username, password string) func(*http.Request) error {
+	return func(req *http.Request) error {
+		req.SetBasicAuth(username, password)
+		return nil
+	}
+}
+
 type Limit struct {
 	Limiter *redis_rate.Limiter
 	redis_rate.Limit
