@@ -2,7 +2,9 @@ package qhttp
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -13,6 +15,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin/binding"
+	"github.com/go-redis/redis/v8"
+	"github.com/go-redis/redis_rate/v9"
 )
 
 var (
@@ -35,31 +39,98 @@ var (
 	QHTTPClient = &http.Client{
 		Transport: QHTTPTransport,
 	}
+
+	ErrLimitExceed = errors.New("limit exceed")
+)
+
+const (
+	LimitNoBlock     = -1
+	LimitAlwaysBlock = 0
 )
 
 // WithAuthorization add authorization bearer to request
-func WithAuthorization(token string) func(*http.Request) {
-	return func(req *http.Request) {
+func WithAuthorization(token string) func(*http.Request) error {
+	return func(req *http.Request) error {
 		req.Header.Set("Authorization", "Bearer "+token)
+		return nil
+	}
+}
+
+type Limit struct {
+	Limiter *redis_rate.Limiter
+	redis_rate.Limit
+	Block time.Duration // ms
+	Key   string
+}
+
+func NewLimit(rdb *redis.Client, key string, rate int, period time.Duration, block time.Duration) *Limit {
+	return &Limit{
+		Limiter: redis_rate.NewLimiter(rdb),
+		Limit: redis_rate.Limit{
+			Rate:   rate,
+			Period: period,
+			Burst:  rate,
+		},
+		Block: block,
+		Key:   key,
+	}
+}
+
+func WithLimit(l *Limit) func(*http.Request) error {
+	return func(req *http.Request) error {
+		var ctx context.Context
+
+		if l.Block <= 0 {
+			ctx = context.Background()
+		} else {
+			var cancel context.CancelFunc
+			ctx, cancel = context.WithTimeout(context.Background(), l.Block)
+			defer cancel()
+		}
+
+		for {
+			rlt, err := l.Limiter.Allow(ctx, "qhttp:"+l.Key, l.Limit)
+			if err != nil {
+				return err
+			}
+
+			if rlt.Allowed > 0 {
+				return nil
+			}
+
+			if l.Block < 0 { // <0 means cancel the request
+				return ErrLimitExceed
+			}
+
+			select {
+			case <-time.After(rlt.RetryAfter):
+
+			case <-ctx.Done():
+				return context.DeadlineExceeded
+			}
+		}
 	}
 }
 
 // Get method
-func Get(uri string, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+func Get(uri string, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
 	req, err := http.NewRequest("GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	for _, f := range reqOpts {
-		f(req)
+		err := f(req)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	return QHTTPClient.Do(req)
 }
 
 // GetJSON method
-func GetJSON(uri string, result interface{}, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+func GetJSON(uri string, result interface{}, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
 	rsp, err := Get(uri, reqOpts...)
 
 	if err != nil {
@@ -87,7 +158,7 @@ func GetJSON(uri string, result interface{}, reqOpts ...func(*http.Request)) (re
 }
 
 // Post method
-func Post(uri, contentType string, body io.Reader, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+func Post(uri, contentType string, body io.Reader, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
 	req, err := http.NewRequest("POST", uri, body)
 	if err != nil {
 		return nil, err
@@ -103,12 +174,12 @@ func Post(uri, contentType string, body io.Reader, reqOpts ...func(*http.Request
 }
 
 // PostForm method
-func PostForm(uri string, data url.Values, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+func PostForm(uri string, data url.Values, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
 	return Post(uri, binding.MIMEPOSTForm, strings.NewReader(data.Encode()), reqOpts...)
 }
 
 // Head method
-func Head(uri string, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+func Head(uri string, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
 	req, err := http.NewRequest("HEAD", uri, nil)
 	if err != nil {
 		return nil, err
@@ -120,7 +191,7 @@ func Head(uri string, reqOpts ...func(*http.Request)) (resp *http.Response, err 
 }
 
 // PostJSON method
-func PostJSON(uri string, body interface{}, result interface{}, reqOpts ...func(*http.Request)) (resp *http.Response, err error) {
+func PostJSON(uri string, body interface{}, result interface{}, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
 	var (
 		_b          []byte
 		contentType string
