@@ -72,7 +72,7 @@ func (s *ClientTestSuite) errorCount(errs []error) int {
 }
 
 func (s *ClientTestSuite) TestHTTPGetWithLimitAlwaysBlock() {
-	l := NewLimit(s.redisClient, "alwayswait", 1, time.Second, LimitAlwaysBlock)
+	l := NewLimit(s.redisClient, "alwayswait", 10, time.Second, 1, LimitAlwaysBlock)
 
 	errs := s.runNCall(l, 4)
 
@@ -80,7 +80,7 @@ func (s *ClientTestSuite) TestHTTPGetWithLimitAlwaysBlock() {
 }
 
 func (s *ClientTestSuite) TestHTTPGetWithLimitNoBlock() {
-	l := NewLimit(s.redisClient, "alwayscancel", 1, time.Second, LimitNoBlock)
+	l := NewLimit(s.redisClient, "alwayscancel", 10, time.Second, 1, LimitNoBlock)
 
 	errs := s.runNCall(l, 4)
 
@@ -88,7 +88,7 @@ func (s *ClientTestSuite) TestHTTPGetWithLimitNoBlock() {
 }
 
 func (s *ClientTestSuite) TestHTTPGetWithLimit() {
-	l := NewLimit(s.redisClient, "withlimit", 1, time.Second, 2*time.Second)
+	l := NewLimit(s.redisClient, "withlimit", 2, time.Second, 1, time.Second)
 
 	errs := s.runNCall(l, 4)
 
