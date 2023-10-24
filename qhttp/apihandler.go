@@ -92,7 +92,6 @@ func GinAPIHandler(r APIRequest, middlewares ...APIMiddleware) gin.HandlerFunc {
 		}
 
 		rsp = req.Rsp(c)
-		return
 	}
 }
 
