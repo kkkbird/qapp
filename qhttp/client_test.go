@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis/v8"
+	"github.com/redis/go-redis/v9"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/suite"
 )
@@ -88,11 +88,11 @@ func (s *ClientTestSuite) TestHTTPGetWithLimitNoBlock() {
 }
 
 func (s *ClientTestSuite) TestHTTPGetWithLimit() {
-	l := NewLimit(s.redisClient, "withlimit", 2, time.Second, 1, time.Second)
+	l := NewLimit(s.redisClient, "withlimit", 4, time.Second, 2, time.Second)
 
-	errs := s.runNCall(l, 4)
+	errs := s.runNCall(l, 8)
 
-	s.Equal(2, s.errorCount(errs))
+	s.Equal(4, s.errorCount(errs))
 }
 
 func (s *ClientTestSuite) TearDownSuite() {
