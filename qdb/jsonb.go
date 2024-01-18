@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	ErrWrongJsonBType = errors.New("Type assertion .([]byte) failed.")
+	ErrWrongJsonBType = errors.New("jsonb scan failed.")
 )
 
 type JsonB struct {
@@ -17,12 +17,21 @@ type JsonB struct {
 
 // Scan implements the Scanner interface.
 func (jb *JsonB) Scan(src interface{}) error {
-	source, ok := src.([]byte)
-	if !ok {
-		return ErrWrongJsonBType
+	switch src := src.(type) {
+	case []byte:
+		return jb.scanBytes(src)
+	case string:
+		return jb.scanBytes([]byte(src))
+	case nil:
+		jb.data = nil
+		return nil
 	}
 
-	err := json.Unmarshal(source, jb.data)
+	return ErrWrongJsonBType
+}
+
+func (jb *JsonB) scanBytes(src []byte) error {
+	err := json.Unmarshal(src, jb.data)
 	if err != nil {
 		return err
 	}
