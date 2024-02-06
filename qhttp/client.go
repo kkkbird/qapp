@@ -70,13 +70,13 @@ type Limit struct {
 	Key   string
 }
 
-func NewLimit(rdb *redis.Client, key string, rate int, period time.Duration, bust int, block time.Duration) *Limit {
+func NewLimit(rdb *redis.Client, key string, rate int, period time.Duration, burst int, block time.Duration) *Limit {
 	return &Limit{
 		Limiter: redis_rate.NewLimiter(rdb),
 		Limit: redis_rate.Limit{
 			Rate:   rate,
 			Period: period,
-			Burst:  bust,
+			Burst:  burst,
 		},
 		Block: block,
 		Key:   key,
