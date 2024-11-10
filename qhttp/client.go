@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net"
 	"net/http"
 	"net/url"
@@ -154,7 +153,7 @@ func GetJSON(uri string, result interface{}, reqOpts ...func(*http.Request) erro
 
 	if result != nil { //if result != nil, try Unmarshal the body
 		defer rsp.Body.Close()
-		rspBody, err := ioutil.ReadAll(rsp.Body)
+		rspBody, err := io.ReadAll(rsp.Body)
 		if err != nil {
 			return nil, err
 		}
@@ -237,7 +236,7 @@ func PostJSON(uri string, body interface{}, result interface{}, reqOpts ...func(
 
 	if result != nil { //if result != nil, try Unmarshal the body
 		defer rsp.Body.Close()
-		rspBody, err := ioutil.ReadAll(rsp.Body)
+		rspBody, err := io.ReadAll(rsp.Body)
 		if err != nil {
 			return nil, err
 		}
