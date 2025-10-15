@@ -39,7 +39,7 @@ type InitFunc func(ctx context.Context) (CleanFunc, error)
 // CleanFunc for qapp app, clean init module
 type CleanFunc func(ctx context.Context)
 
-//InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
+// InitStage is executed with add sequence, InitFunc in one init stage will be called concurrently
 type InitStage struct {
 	mu         sync.Mutex
 	name       string
@@ -347,10 +347,10 @@ func (a *Application) runDaemons() error {
 	ctx, cancel = context.WithCancel(context.Background())
 	defer cancel()
 
-	var wg sync.WaitGroup
-
 	// run daemon funcs
 	go func() {
+		var wg sync.WaitGroup
+
 		wg.Add(len(a.daemons))
 
 		for _, d := range a.daemons {
