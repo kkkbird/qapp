@@ -10,15 +10,15 @@ import (
 
 // Context is the request context, can use *gin.Context directly
 type Context interface {
-	Get(key string) (value interface{}, exists bool)
-	MustGet(key string) interface{}
-	Set(key string, value interface{})
+	Get(key any) (value any, exists bool)
+	MustGet(key any) any
+	Set(key any, value any)
 }
 
 // APIRequest define the interface for api request
 type APIRequest interface {
 	Rsp(Context) APIResponse // main response function
-	RspOK(Context, ...interface{}) APIResponse
+	RspOK(Context, ...any) APIResponse
 	RspInvalidParam(Context, error) APIResponse
 	RspInternalError(Context, error) APIResponse
 }
@@ -152,7 +152,7 @@ func (r CommonResponse) IsError(err error) bool {
 type CommonRequest struct{}
 
 // RspOK return the rsp ok
-func (r *CommonRequest) RspOK(c Context, data ...interface{}) APIResponse {
+func (r *CommonRequest) RspOK(c Context, data ...any) APIResponse {
 	return RspOk
 }
 
