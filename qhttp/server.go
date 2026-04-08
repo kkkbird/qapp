@@ -75,10 +75,8 @@ func RunServer(ctx context.Context, addr string, handler http.Handler, opts ...f
 		Handler: handler,
 	}
 
-	if opts != nil {
-		for _, optFunc := range opts {
-			optFunc(srv)
-		}
+	for _, optFunc := range opts {
+		optFunc(srv)
 	}
 
 	srvErrChan := make(chan error)

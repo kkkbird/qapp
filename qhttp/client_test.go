@@ -1,6 +1,7 @@
 package qhttp
 
 import (
+	"context"
 	"sync"
 	"testing"
 	"time"
@@ -29,7 +30,7 @@ func (s *ClientTestSuite) SetupSuite() {
 func (s *ClientTestSuite) TestHTTPGet() {
 	// l := NewLimit(redis_rate.NewLimiter(s.redisClient), "test", 1, time.Second, 0)
 
-	resp, err := Get("https://m.baidu.com")
+	resp, err := Get(context.Background(), "https://m.baidu.com")
 
 	if !s.NoError(err) {
 		return
@@ -45,10 +46,10 @@ func (s *ClientTestSuite) runNCall(l *Limit, n int) []error {
 		wg.Add(1)
 		go func(j int) {
 			defer wg.Done()
-			resp, err := Get("https://m.baidu.com", WithLimit(l))
+			resp, err := Get(context.Background(), "https://m.baidu.com", WithLimit(l))
 
 			if err != nil {
-				s.T().Logf("get err:" + err.Error())
+				s.T().Logf("get err: %v", err.Error())
 				errs[j] = err
 				return
 			}

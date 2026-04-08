@@ -127,8 +127,8 @@ func WithLimit(l *Limit) func(*http.Request) error {
 }
 
 // Get method
-func Get(uri string, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
-	req, err := http.NewRequest("GET", uri, nil)
+func Get(ctx context.Context, uri string, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -144,8 +144,8 @@ func Get(uri string, reqOpts ...func(*http.Request) error) (resp *http.Response,
 }
 
 // GetJSON method
-func GetJSON(uri string, result interface{}, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
-	rsp, err := Get(uri, reqOpts...)
+func GetJSON(ctx context.Context, uri string, result interface{}, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
+	rsp, err := Get(ctx, uri, reqOpts...)
 
 	if err != nil {
 		return nil, err
@@ -172,8 +172,8 @@ func GetJSON(uri string, result interface{}, reqOpts ...func(*http.Request) erro
 }
 
 // Post method
-func Post(uri, contentType string, body io.Reader, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
-	req, err := http.NewRequest("POST", uri, body)
+func Post(ctx context.Context, uri, contentType string, body io.Reader, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, "POST", uri, body)
 	if err != nil {
 		return nil, err
 	}
@@ -191,13 +191,13 @@ func Post(uri, contentType string, body io.Reader, reqOpts ...func(*http.Request
 }
 
 // PostForm method
-func PostForm(uri string, data url.Values, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
-	return Post(uri, binding.MIMEPOSTForm, strings.NewReader(data.Encode()), reqOpts...)
+func PostForm(ctx context.Context, uri string, data url.Values, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
+	return Post(ctx, uri, binding.MIMEPOSTForm, strings.NewReader(data.Encode()), reqOpts...)
 }
 
 // Head method
-func Head(uri string, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
-	req, err := http.NewRequest("HEAD", uri, nil)
+func Head(ctx context.Context, uri string, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
+	req, err := http.NewRequestWithContext(ctx, "HEAD", uri, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func Head(uri string, reqOpts ...func(*http.Request) error) (resp *http.Response
 }
 
 // PostJSON method
-func PostJSON(uri string, body interface{}, result interface{}, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
+func PostJSON(ctx context.Context, uri string, body interface{}, result interface{}, reqOpts ...func(*http.Request) error) (resp *http.Response, err error) {
 	var (
 		_b          []byte
 		contentType string
@@ -228,7 +228,7 @@ func PostJSON(uri string, body interface{}, result interface{}, reqOpts ...func(
 		contentType = binding.MIMEJSON
 	}
 
-	rsp, err := Post(uri, contentType, bytes.NewReader(_b), reqOpts...)
+	rsp, err := Post(ctx, uri, contentType, bytes.NewReader(_b), reqOpts...)
 
 	if err != nil {
 		return nil, err
