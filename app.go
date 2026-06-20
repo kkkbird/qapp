@@ -147,9 +147,11 @@ type Application struct {
 	onConfigFileChanged func()
 	cmdline             *pflag.FlagSet
 	name                string
-	initStages          []*InitStage
 	initedStageIdx      int
+	initStages          []*InitStage
+	initConditions      []func() bool
 	daemons             []DaemonFunc
+	daemonConditions    []func() bool
 }
 
 // AppOpts is setters for application options
@@ -239,13 +241,27 @@ func (a *Application) initParams(ctx context.Context) (CleanFunc, error) {
 
 // AddInitStage add a stage for qapp app
 func (a *Application) AddInitStage(name string, funcs ...InitFunc) *Application {
+	return a.AddInitStageWithCondition(nil, name, funcs...)
+}
+
+func (a *Application) AddInitStageWithCondition(condition func() bool, name string, funcs ...InitFunc) *Application {
 	a.initStages = append(a.initStages, newInitStage(name, funcs))
+	a.initConditions = append(a.initConditions, condition)
 	return a
 }
 
 // AddDaemons add a daemon for qapp app
 func (a *Application) AddDaemons(funcs ...DaemonFunc) *Application {
+	return a.AddDaemonsWithCondition(nil, funcs...)
+}
+
+func (a *Application) AddDaemonsWithCondition(condition func() bool, funcs ...DaemonFunc) *Application {
 	a.daemons = append(a.daemons, funcs...)
+
+	for range funcs {
+		a.daemonConditions = append(a.daemonConditions, condition)
+	}
+
 	return a
 }
 
@@ -265,6 +281,12 @@ func (a *Application) runInitStages() error {
 
 	// run init stages
 	for i, s := range a.initStages {
+		condi := a.initConditions[i]
+
+		if condi != nil && !condi() {
+			continue
+		}
+
 		cErr := make(chan error, 1)
 
 		go func() {
@@ -318,6 +340,13 @@ func (a *Application) runCleanStage() {
 
 	// run clean stage in reverse order
 	for i := a.initedStageIdx; i > 0; i-- { // i==0 is preload,
+
+		condi := a.initConditions[i]
+
+		if condi != nil && !condi() {
+			continue
+		}
+
 		s := a.initStages[i]
 		cErr := make(chan error, 1)
 
@@ -351,9 +380,14 @@ func (a *Application) runDaemons() error {
 	go func() {
 		var wg sync.WaitGroup
 
-		wg.Add(len(a.daemons))
+		for idx, d := range a.daemons {
+			condi := a.daemonConditions[idx]
+			if condi != nil && !condi() {
+				continue
+			}
 
-		for _, d := range a.daemons {
+			wg.Add(1)
+
 			go func(_d DaemonFunc) {
 				defer wg.Done()
 
