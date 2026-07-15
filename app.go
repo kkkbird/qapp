@@ -144,6 +144,7 @@ type Application struct {
 
 	preload             func() error
 	envPrefix           string
+	configOverrideFile  string
 	onConfigFileChanged func()
 	cmdline             *pflag.FlagSet
 	name                string
